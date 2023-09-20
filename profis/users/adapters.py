@@ -32,7 +32,7 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         if name := data.get("name"):
             user.name = name
         elif first_name := data.get("first_name"):
-            user.name = first_name
+            user.first_name = first_name
             if last_name := data.get("last_name"):
-                user.name += f" {last_name}"
+                user.last_name += f" {last_name}"
         return super().populate_user(request, sociallogin, data)
