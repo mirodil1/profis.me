@@ -30,7 +30,7 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         """
         user = sociallogin.user
         if name := data.get("name"):
-            user.name = name
+            user.first_name = name
         elif first_name := data.get("first_name"):
             user.first_name = first_name
             if last_name := data.get("last_name"):
