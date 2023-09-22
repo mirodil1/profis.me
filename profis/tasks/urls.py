@@ -1,6 +1,6 @@
 from django.urls import path
 
-from profis.tasks.views import TaskListRetrieveViewSet, TaskCreateViewSet
+from profis.tasks.views import TaskCreateViewSet, TaskListRetrieveViewSet
 
 app_name = "tasks"
 
