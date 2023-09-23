@@ -41,3 +41,17 @@ class TaskImage(TimeStampedModel):
 
     task = models.ForeignKey(to=Task, on_delete=models.CASCADE, related_name="images", verbose_name=_("Задание"))
     image = models.ImageField(upload_to="tasks", verbose_name=_("Фото"))
+
+
+class TaskResponse(TimeStampedModel):
+    class STATUS(models.TextChoices):
+        PENDING = "pending", _("Рассматриваемый")
+        ACCEPTED = "accepted", _("Принято")
+
+    task = models.ForeignKey(to=Task, related_name="responses", on_delete=models.CASCADE, verbose_name=_("Задание"))
+    worker = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_("Исполнитель"))
+    text = models.TextField(verbose_name=_("Текст"))
+    status = models.CharField(max_length=12, choices=STATUS.choices, default=STATUS.PENDING, verbose_name=_("СТАТУС"))
+
+    def __str__(self):
+        return f"Response to '{self.task.name}' by {self.worker.first_name}"
