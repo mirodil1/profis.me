@@ -3,12 +3,20 @@ from typing import Any
 
 from django.contrib.auth import get_user_model
 from factory import Faker, post_generation
-from factory.django import DjangoModelFactory
+from factory.django import DjangoModelFactory, ImageField
 
 
 class UserFactory(DjangoModelFactory):
     email = Faker("email")
-    first_name = Faker("name")
+    first_name = Faker("first_name")
+    last_name = Faker("last_name")
+    bio = Faker("sentence")
+    work_experiance = Faker("random_int", min=1, max=12)
+    gender = Faker("bool")
+    avatar = ImageField()
+    gender = Faker("random_element", elements=["m", "f"])
+    is_worker = Faker("boolean")
+    number_of_views = Faker("random_int", min=0, max=1000000)
 
     @post_generation
     def password(self, create: bool, extracted: Sequence[Any], **kwargs):

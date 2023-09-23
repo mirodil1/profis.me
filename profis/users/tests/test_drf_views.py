@@ -1,8 +1,8 @@
 import pytest
 from rest_framework.test import APIRequestFactory
 
-from profis.users.api.views import UserViewSet
 from profis.users.models import User
+from profis.users.views import UserViewSet
 
 
 class TestUserViewSet:
@@ -28,4 +28,15 @@ class TestUserViewSet:
 
         response = view.me(request)  # type: ignore
 
-        assert response.data == {"first_name": user.first_name, "last_name": user.last_name}
+        assert response.data == {
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "bio": user.bio,
+            "email": user.email,
+            "age": user.age,
+            "avatar": "http://testserver" + user.avatar.url,
+            "number_of_views": user.number_of_views,
+            "is_worker": user.is_worker,
+            "work_experiance": user.work_experiance,
+            "gender": user.gender,
+        }
