@@ -1,10 +1,10 @@
 from django.urls import path
 
-from profis.users.views import user_detail_view, user_redirect_view, user_update_view
+from profis.users.views import UserViewSet
 
 app_name = "users"
 urlpatterns = [
-    path("~redirect/", view=user_redirect_view, name="redirect"),
-    path("~update/", view=user_update_view, name="update"),
-    path("<int:pk>/", view=user_detail_view, name="detail"),
+    path("", UserViewSet.as_view({"get": "list"}), name="list"),
+    path("<int:id>/", UserViewSet.as_view({"get": "retrieve"}), name="detail"),
+    path("me/", UserViewSet.as_view({"get": "me"}), name="me"),
 ]
