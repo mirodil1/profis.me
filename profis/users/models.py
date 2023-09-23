@@ -1,9 +1,9 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from profis.categories.models import Category
 from profis.users.managers import UserManager
 
 
@@ -29,6 +29,9 @@ class User(AbstractUser):
     avatar = models.ImageField(upload_to="avatars", null=True, blank=True, verbose_name=_("Фото профиля"))
     work_experiance = models.PositiveIntegerField(null=True, blank=True, verbose_name=_("Стаж работы"))
     gender = models.CharField(choices=Gender.choices, verbose_name=_("Пол"), null=True, blank=True)
+    categories = models.ManyToManyField(
+        to=Category, related_name="user_category", null=True, blank=True, verbose_name=_("Категории")
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -45,16 +48,7 @@ class User(AbstractUser):
         Return the age using `date_of_birth`
         """
         today = timezone.now().today()
-
-        return (today.year - self.date_of_birth.year) - int(
-            (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day)
-        )
-
-    def get_absolute_url(self) -> str:
-        """Get URL for user's detail view.
-
-        Returns:
-            str: URL for user detail.
-
-        """
-        return reverse("users:detail", kwargs={"pk": self.id})
+        if self.date_of_birth:
+            return (today.year - self.date_of_birth.year) - int(
+                (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day)
+            )
