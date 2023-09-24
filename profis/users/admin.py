@@ -5,6 +5,7 @@ from django.contrib.auth import decorators, get_user_model
 from django.utils.translation import gettext_lazy as _
 
 from profis.users.forms import UserAdminChangeForm, UserAdminCreationForm
+from profis.users.models import UserWallet
 
 User = get_user_model()
 
@@ -14,12 +15,20 @@ if settings.DJANGO_ADMIN_FORCE_ALLAUTH:
     admin.site.login = decorators.login_required(admin.site.login)  # type: ignore[method-assign]
 
 
+class UserWalletInline(admin.StackedInline):
+    model = UserWallet
+    readonly_fields = ["id", "user", "balance", "created_at"]
+
+
 @admin.register(User)
 class UserAdmin(auth_admin.UserAdmin):
     form = UserAdminChangeForm
     add_form = UserAdminCreationForm
     fieldsets = (
-        (_("Персональная информация"), {"fields": ("first_name", "last_name", "gender", "date_of_birth")}),
+        (
+            _("Персональная информация"),
+            {"fields": ("first_name", "last_name", "phone_number", "gender", "date_of_birth")},
+        ),
         (_("Общая информация"), {"fields": ("bio", "number_of_views", "is_worker", "avatar", "work_experiance")}),
         (
             _("Права доступа"),
@@ -36,7 +45,7 @@ class UserAdmin(auth_admin.UserAdmin):
         (_("Важные даты"), {"fields": ("last_login", "date_joined")}),
         (None, {"fields": ("email", "password")}),
     )
-    list_display = ["id", "first_name", "last_name", "is_worker", "email", "is_superuser"]
+    list_display = ["phone_number", "first_name", "last_name", "is_worker", "email", "is_superuser"]
     list_filter = auth_admin.UserAdmin.list_filter + ("is_worker",)
     search_fields = ["first_name", "last_name"]
     ordering = ["id"]
@@ -50,3 +59,4 @@ class UserAdmin(auth_admin.UserAdmin):
         ),
     )
     readonly_fields = ["number_of_views"]
+    inlines = [UserWalletInline]
