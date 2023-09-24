@@ -5,6 +5,13 @@ from django.contrib.auth import get_user_model
 from factory import Faker, post_generation
 from factory.django import DjangoModelFactory, ImageField
 
+from profis.users.models import UserWallet
+
+
+class WalletFactory(DjangoModelFactory):
+    class Meta:
+        model = UserWallet
+
 
 class UserFactory(DjangoModelFactory):
     email = Faker("email")
