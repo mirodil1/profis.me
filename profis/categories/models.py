@@ -1,7 +1,8 @@
 from django.core.validators import FileExtensionValidator
 from django.db import models
-from django.utils.text import slugify
+from django.template import defaultfilters
 from django.utils.translation import gettext_lazy as _
+from unidecode import unidecode
 
 from profis.core.models import TimeStampedModel
 
@@ -34,7 +35,7 @@ class Category(TimeStampedModel):
         verbose_name_plural = _("Категории")
 
     def save(self, *args, **kwargs):
-        self.slug = slugify(self.name)
+        self.slug = defaultfilters.slugify(unidecode(self.name))
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
