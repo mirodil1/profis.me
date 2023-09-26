@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from profis.categories.models import Category
 from profis.categories.serializers import CategorySerializer
-from profis.tasks.models import Task, TaskImage
+from profis.tasks.models import Task, TaskImage, TaskResponse
 from profis.users.serializers import UserSerializer
 
 
@@ -65,9 +65,37 @@ class TaskCreateSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
-        uploaded_images = validated_data.get("uploaded_images", None)
+        uploaded_images = validated_data.pop("uploaded_images", None)
         task = Task.objects.create(**validated_data)
         if uploaded_images:
             for image in uploaded_images:
                 TaskImage.objects.create(task=task, image=image)
         return task
+
+
+class TaskForTaskResponseSerializer(serializers.ModelSerializer):
+    """
+    Use for taskresponse serializer only with necessary fields.
+    """
+
+    class Meta:
+        model = Task
+        fields = ["id"]
+
+
+class TaskResponseSerializer(serializers.ModelSerializer):
+    task = TaskForTaskResponseSerializer()
+    worker = UserSerializer()
+
+    class Meta:
+        model = TaskResponse
+        fields = ["id", "task", "worker", "price", "text", "status"]
+
+
+class TaskResponseCreateSerializer(serializers.ModelSerializer):
+    task = serializers.PrimaryKeyRelatedField(queryset=Task.objects.all(), write_only=True)
+    worker = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    class Meta:
+        model = TaskResponse
+        fields = ["task", "worker", "price", "text", "status"]
