@@ -13,12 +13,29 @@ class Task(TimeStampedModel):
 
     class Status(models.TextChoices):
         OPEN = "open", _("Открыто")
+        IN_PROGRESS = "in_progress", _("Выполняется")
+        COMPLETED = "completed", _("Выполнено")
+        NOT_COMPLETED = "not_completed", _("Не выполнено")
         CLOSED = "closed", _("Закрыто")
 
     category = models.ForeignKey(to=Category, on_delete=models.CASCADE, verbose_name=_("Категория"))
-    owner = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_("Пользователь"))
+    owner = models.ForeignKey(
+        to=settings.AUTH_USER_MODEL,
+        related_name="owner_task",
+        on_delete=models.CASCADE,
+        verbose_name=_("Пользователь"),
+    )
+    worker = models.ForeignKey(
+        to=settings.AUTH_USER_MODEL,
+        related_name="worker_task",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name=_("Исполнитель"),
+    )
     name = models.CharField(max_length=255, verbose_name=_("Название задание"))
     description = models.TextField(verbose_name=_("Подробное описание"))
+    budget = models.PositiveIntegerField(default=0, verbose_name=_("Бюджет"))
     phone_number = models.CharField(max_length=15, verbose_name=_("Номер телефона"))
     status = models.CharField(max_length=15, choices=Status.choices, default=Status.CLOSED)
     start_time = models.DateTimeField(null=True, blank=True, verbose_name=_("Время начала"))
@@ -50,6 +67,7 @@ class TaskResponse(TimeStampedModel):
 
     task = models.ForeignKey(to=Task, related_name="responses", on_delete=models.CASCADE, verbose_name=_("Задание"))
     worker = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_("Исполнитель"))
+    price = models.PositiveIntegerField(default=0, verbose_name=_("Цена"))
     text = models.TextField(verbose_name=_("Текст"))
     status = models.CharField(max_length=12, choices=STATUS.choices, default=STATUS.PENDING, verbose_name=_("СТАТУС"))
 
