@@ -72,6 +72,34 @@ class TaskCreateSerializer(serializers.ModelSerializer):
                 TaskImage.objects.create(task=task, image=image)
         return task
 
+    def update(self, instance, validated_data):
+        uploaded_images = validated_data.pop("uploaded_images", None)
+        print(uploaded_images)
+        # if uploaded_images is not None:
+        #     print(uploaded_images)
+        #     obj_mapping = {obj.id: obj for obj in instance.images.all()}
+        #     for img in uploaded_images:
+        #         if "id" in img:
+        #             print(obj.image)
+        #             # Update existing object
+        #             obj_id = img["id"]
+        #             obj = obj_mapping.get(obj_id, None)
+        #             if obj is not None:
+        #                 obj.image = img
+        #                 obj.save()
+        #         else:
+        #             # Create new object
+        #             TaskImage.objects.create(
+        #                 task=instance,
+        #                 image=img
+        #             )
+        # Update remaining fields of TutorProfileSerializer
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+        instance.save()
+
+        return instance
+
 
 class TaskForTaskResponseSerializer(serializers.ModelSerializer):
     """

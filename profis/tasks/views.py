@@ -3,7 +3,7 @@ from typing import Any
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema
-from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveModelMixin
+from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -44,10 +44,11 @@ class TaskListRetrieveViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet
 
 
 @extend_schema(tags=["tasks"])
-class TaskCreateViewSet(CreateModelMixin, GenericViewSet):
+class TaskCreateViewSet(CreateModelMixin, UpdateModelMixin, GenericViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskCreateSerializer
-    permission_classes = [IsAuthenticated]
+    lookup_field = "id"
+    # permission_classes = [IsAuthenticated]
 
 
 @extend_schema(tags=["task-responses"])

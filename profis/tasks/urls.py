@@ -17,6 +17,7 @@ urlpatterns = [
     path("all/", TaskListRetrieveViewSet.as_view({"get": "list"}), name="task-list"),
     path("<int:id>/", TaskListRetrieveViewSet.as_view({"get": "retrieve"}), name="task-detail"),
     path("new/", TaskCreateViewSet.as_view({"post": "create"}), name="task-create"),
+    path("update/<int:id>/", TaskCreateViewSet.as_view({"put": "update"}), name="task-update"),
     # Task response
     path("responses/<int:task_id>/", TaskResponseListViewSet.as_view({"get": "list"}), name="response-list-by-task"),
     path(
