@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db.models.query import QuerySet
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import action
@@ -25,3 +26,15 @@ class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericV
     def me(self, request):
         serializer = UserSerializer(request.user, context={"request": request})
         return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+
+@extend_schema(tags=["users"])
+class WorkerListViewSet(ListModelMixin, GenericViewSet):
+    serializer_class = UserSerializer
+    queryset = User.objects.all()
+
+    def get_queryset(self, *args, **kwargs) -> QuerySet:
+        if "category_slug" in self.kwargs:
+            category = self.kwargs["category_slug"]
+            return self.queryset.filter(categories__slug=category)
+        return self.queryset.filter(is_worker=True)

@@ -29,7 +29,10 @@ class UserAdmin(auth_admin.UserAdmin):
             _("Персональная информация"),
             {"fields": ("first_name", "last_name", "phone_number", "gender", "date_of_birth")},
         ),
-        (_("Общая информация"), {"fields": ("bio", "number_of_views", "is_worker", "avatar", "work_experiance")}),
+        (
+            _("Общая информация"),
+            {"fields": ("bio", "categories", "number_of_views", "is_worker", "avatar", "work_experiance")},
+        ),
         (
             _("Права доступа"),
             {
