@@ -34,9 +34,7 @@ class User(AbstractUser):
     avatar = models.ImageField(upload_to="avatars", null=True, blank=True, verbose_name=_("Фото профиля"))
     work_experiance = models.PositiveIntegerField(null=True, blank=True, verbose_name=_("Стаж работы"))
     gender = models.CharField(choices=Gender.choices, verbose_name=_("Пол"), null=True, blank=True)
-    categories = models.ManyToManyField(
-        to=Category, related_name="user_category", null=True, blank=True, verbose_name=_("Категории")
-    )
+    categories = models.ManyToManyField(to=Category, related_name="user_category", verbose_name=_("Категории"))
     username = None
 
     USERNAME_FIELD = "email"
