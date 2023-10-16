@@ -8,6 +8,8 @@ from django.views.generic import TemplateView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.authtoken.views import obtain_auth_token
 
+from profis.users.views import GoogleLogin
+
 urlpatterns = [
     # Django Admin, use {% url 'admin:index' %}
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
@@ -23,6 +25,7 @@ urlpatterns += [
     path("api/users/", include("profis.users.urls", namespace="users")),
     path("api/categories/", include("profis.categories.urls", namespace="categories")),
     path("api/tasks/", include("profis.tasks.urls", namespace="tasks")),
+    path("api/ratings/", include("profis.ratings.urls", namespace="ratings")),
     # DRF auth token
     path("auth-token/", obtain_auth_token),
     path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
@@ -31,6 +34,7 @@ urlpatterns += [
         SpectacularSwaggerView.as_view(url_name="api-schema"),
         name="api-docs",
     ),
+    path("dj-rest-auth/google/", GoogleLogin.as_view(), name="google_login"),
 ]
 
 if settings.DEBUG:
