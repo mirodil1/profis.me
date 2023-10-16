@@ -23,7 +23,7 @@ class Task(TimeStampedModel):
         to=settings.AUTH_USER_MODEL,
         related_name="owner_task",
         on_delete=models.CASCADE,
-        verbose_name=_("Пользователь"),
+        verbose_name=_("Заказчик"),
     )
     worker = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
