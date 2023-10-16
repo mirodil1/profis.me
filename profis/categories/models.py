@@ -29,8 +29,15 @@ class Category(TimeStampedModel):
         null=True,
         verbose_name=_("Родительская категория"),
     )
+    price = models.DecimalField(default=0, max_digits=9, decimal_places=2, verbose_name=_("Цена"))
+    order = models.PositiveIntegerField(
+        default=0,
+        blank=False,
+        null=False,
+    )
 
     class Meta:
+        ordering = ["order"]
         verbose_name = _("Категория")
         verbose_name_plural = _("Категории")
 
