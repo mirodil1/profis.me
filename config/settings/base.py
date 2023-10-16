@@ -32,7 +32,7 @@ LANGUAGES = [
     ("ru", "Russian"),
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#site-id
-SITE_ID = 1
+SITE_ID = 2
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-i18n
 USE_I18N = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-tz
@@ -75,11 +75,15 @@ THIRD_PARTY_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "dj_rest_auth.registration",
     "django_celery_beat",
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
     "drf_spectacular",
+    "adminsortable2",
+    "push_notifications",
 ]
 
 LOCAL_APPS = [
@@ -87,6 +91,7 @@ LOCAL_APPS = [
     "profis.users",
     "profis.categories",
     "profis.tasks",
+    "profis.ratings",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -142,6 +147,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 # STATIC
@@ -326,7 +332,19 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
-
+# dj-rest-auth https://dj-rest-auth.readthedocs.io/en/latest/configuration.html
+REST_AUTH = {
+    "USE_JWT": True,
+    "SESSION_LOGIN": False,
+    "JWT_SERIALIZER": "dj_rest_auth.serializers.JWTSerializer",
+    "JWT_SERIALIZER_WITH_EXPIRATION": "dj_rest_auth.serializers.JWTSerializerWithExpiration",
+    "JWT_AUTH_COOKIE": "jwt_access_token",
+    "JWT_AUTH_REFRESH_COOKIE": "jwt_refresh_token",
+    "JWT_AUTH_RETURN_EXPIRATION": True,
+    "JWT_AUTH_HTTPONLY": False,
+    "OLD_PASSWORD_FIELD_ENABLED": True,
+    "LOGOUT_ON_PASSWORD_CHANGE": True,
+}
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
 CORS_URLS_REGEX = r"^/api/.*$"
 
@@ -338,5 +356,10 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
 }
-# Your stuff...
-# ------------------------------------------------------------------------------
+
+# django-push-notifications - https://github.com/jazzband/django-push-notifications
+PUSH_NOTIFICATIONS_SETTINGS = {
+    "FCM_API_KEY": env("FCM_API_KEY"),
+    "APNS_CERTIFICATE": "/path/to/your/certificate.pem",
+    "APNS_TOPIC": "com.example.push_test",
+}
