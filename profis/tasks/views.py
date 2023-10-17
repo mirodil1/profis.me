@@ -7,7 +7,7 @@ from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveMode
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
+from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
@@ -71,21 +71,29 @@ class TaskResponseCraeteViewSet(CreateModelMixin, GenericViewSet):
     serializer_class = TaskResponseCreateSerializer
     permission_classes = [IsWorker, IsAuthenticated]
 
-    def perform_create(self, serializer):
-        # Get the user making the request
-        user = self.request.user
-
-        # Get the task for which the response is being created
-        task = serializer.validated_data["task"]
-
-        # Check if the user has already responded to this task
-        existing_response = TaskResponse.objects.filter(task=task, worker=user).exists()
-
-        if existing_response:
-            # User has already responded to this task
-            return Response({"error": _("Пользователь уже откликнулся на это задание")}, status=HTTP_400_BAD_REQUEST)
-        else:
-            serializer.save()
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            # Get the user making the request
+            user = request.user
+            balance = user.userwallet.balance
+            # Get the task for which the response is being created
+            task = serializer.validated_data["task"]
+            price = task.category.price
+            # Check if the user has already responded to this task
+            existing_response = TaskResponse.objects.filter(task=task, worker=user).exists()
+            if existing_response:
+                # User has already responded to this task
+                return Response(
+                    {"error": _("Пользователь уже откликнулся на это задание")}, status=HTTP_400_BAD_REQUEST
+                )
+            else:
+                balance -= price
+                user.userwallet.balance = balance
+                user.userwallet.save()
+                self.perform_create(serializer)
+                headers = self.get_success_headers(serializer.data)
+                return Response(serializer.data, status=HTTP_201_CREATED, headers=headers)
 
 
 @extend_schema(tags=["user-tasks"])
