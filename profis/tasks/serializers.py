@@ -1,9 +1,22 @@
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from profis.categories.models import Category
 from profis.categories.serializers import CategorySerializer
-from profis.tasks.models import Task, TaskImage, TaskResponse
+from profis.tasks.models import Task, TaskAddress, TaskImage, TaskResponse
 from profis.users.serializers import UserSerializer
+
+
+class TaskAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaskAddress
+        fields = [
+            "id",
+            "name",
+            "longitude",
+            "latitude",
+            "point",
+        ]
 
 
 class TaskImageSerializer(serializers.ModelSerializer):
@@ -20,6 +33,7 @@ class TaskSerializer(serializers.ModelSerializer):
     owner = UserSerializer()
     file = serializers.FileField(read_only=True)
     images = TaskImageSerializer(many=True)
+    address = TaskAddressSerializer(many=True)
 
     class Meta:
         model = Task
@@ -35,6 +49,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "start_time",
             "finish_time",
             "images",
+            "address",
             "number_of_views",
         ]
 
@@ -47,10 +62,12 @@ class TaskCreateSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
     )
+    address = TaskAddressSerializer(many=True, allow_empty=True)
     owner = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:
         model = Task
+
         fields = [
             "id",
             "category",
@@ -60,13 +77,25 @@ class TaskCreateSerializer(serializers.ModelSerializer):
             "phone_number",
             "file",
             "uploaded_images",
+            "address",
             "start_time",
             "finish_time",
         ]
 
     def create(self, validated_data):
         uploaded_images = validated_data.pop("uploaded_images", None)
+        addresses = validated_data.pop("address", None)
         task = Task.objects.create(**validated_data)
+        if addresses:
+            for address in addresses:
+                address = dict(address)
+                TaskAddress.objects.create(
+                    task=task,
+                    name=address["name"],
+                    longitude=address["longitude"],
+                    latitude=address["latitude"],
+                    point=address["point"],
+                )
         if uploaded_images:
             for image in uploaded_images:
                 TaskImage.objects.create(task=task, image=image)
@@ -127,3 +156,15 @@ class TaskResponseCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskResponse
         fields = ["task", "worker", "price", "text", "status"]
+
+    def validate(self, validated_data):
+        task = validated_data.get("task", None)
+        worker = validated_data.get("worker", None)
+
+        if worker == task.owner:
+            raise serializers.ValidationError(_("Вы не можете выполнить свою задачу"))
+
+        if worker.userwallet.balance < task.category.price:
+            raise serializers.ValidationError(_("Недостаточно средств"))
+
+        return validated_data
