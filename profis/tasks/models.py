@@ -37,7 +37,7 @@ class Task(TimeStampedModel):
     description = models.TextField(verbose_name=_("Подробное описание"))
     budget = models.PositiveIntegerField(default=0, verbose_name=_("Бюджет"))
     phone_number = models.CharField(max_length=15, verbose_name=_("Номер телефона"))
-    status = models.CharField(max_length=15, choices=Status.choices, default=Status.CLOSED)
+    status = models.CharField(max_length=15, choices=Status.choices, default=Status.OPEN)
     start_time = models.DateTimeField(null=True, blank=True, verbose_name=_("Время начала"))
     finish_time = models.DateTimeField(null=True, blank=True, verbose_name=_("Время окончания"))
     file = models.FileField(null=True, blank=True, verbose_name=_("Файл"))
@@ -59,6 +59,58 @@ class TaskImage(TimeStampedModel):
     task = models.ForeignKey(to=Task, on_delete=models.CASCADE, related_name="images", verbose_name=_("Задание"))
     image = models.ImageField(upload_to="tasks", verbose_name=_("Фото"))
 
+    class Meta:
+        verbose_name = _("Фото")
+        verbose_name_plural = _("Фото")
+
+    def __str__(self) -> str:
+        return self.task.name
+
+
+class TaskAddress(TimeStampedModel):
+    """
+    Address model for tasks
+    """
+
+    class Point(models.TextChoices):
+        A = "a", _("А")
+        B = "b", _("Б")
+        V = "v", _("В")
+        G = "g", _("Г")
+        D = "d", _("Д")
+        E = "e", _("Е")
+        J = "j", _("Ж")
+        Z = "z", _("З")
+        Q = "i", _("И")
+        K = "k", _("К")
+        L = "l", _("Л")
+
+    task = models.ForeignKey(to=Task, on_delete=models.CASCADE, related_name="address", verbose_name=_("Задание"))
+    name = models.CharField(max_length=255, verbose_name=_("Название"))
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+    )
+    latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+    )
+    point = models.CharField(choices=Point.choices, default=Point.A, verbose_name=_("Точка"))
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["task", "point"], name="unique_task_point"),
+        ]
+        verbose_name = _("Адрес")
+        verbose_name_plural = _("Адреса")
+
+    def __str__(self) -> str:
+        return self.name
+
 
 class TaskResponse(TimeStampedModel):
     class STATUS(models.TextChoices):
@@ -73,3 +125,7 @@ class TaskResponse(TimeStampedModel):
 
     def __str__(self):
         return f"Response to '{self.task.name}' by {self.worker.first_name}"
+
+    class Meta:
+        verbose_name = _("Отклик")
+        verbose_name_plural = _("Отклик")
