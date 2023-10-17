@@ -11,6 +11,7 @@ from profis.categories.models import Category
 
 class CategoryChildInline(admin.StackedInline):
     model = Category
+    exclude = ["slug"]
     extra = 1
 
 
@@ -21,6 +22,7 @@ class CategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
         "name",
         "parent_category",
         "icon_tag",
+        "price",
     ]
     search_fields = [
         "name",
