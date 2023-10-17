@@ -1,11 +1,21 @@
 from django.contrib import admin
 
-from profis.tasks.models import Task, TaskImage
+from profis.tasks.models import Task, TaskAddress, TaskImage, TaskResponse
+
+
+class TaskResponseInline(admin.StackedInline):
+    model = TaskResponse
+    extra = 2
+
+
+class TaskAddressInline(admin.StackedInline):
+    model = TaskAddress
+    extra = 2
 
 
 class TaskImageInline(admin.StackedInline):
     model = TaskImage
-    extra = 5
+    extra = 2
 
 
 @admin.register(Task)
@@ -29,6 +39,4 @@ class TaskAdmin(admin.ModelAdmin):
         "number_of_views",
         "owner",
     ]
-    inlines = [
-        TaskImageInline,
-    ]
+    inlines = [TaskImageInline, TaskAddressInline, TaskResponseInline]
