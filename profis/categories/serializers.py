@@ -18,7 +18,14 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ["id", "name", "icon", "slug", "child"]
+        fields = [
+            "id",
+            "name",
+            "icon",
+            "price",
+            "slug",
+            "child",
+        ]
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
