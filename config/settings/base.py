@@ -32,7 +32,7 @@ LANGUAGES = [
     ("ru", "Russian"),
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#site-id
-SITE_ID = 2
+SITE_ID = 1
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-i18n
 USE_I18N = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-tz
@@ -359,7 +359,7 @@ SPECTACULAR_SETTINGS = {
 
 # django-push-notifications - https://github.com/jazzband/django-push-notifications
 PUSH_NOTIFICATIONS_SETTINGS = {
-    "FCM_API_KEY": env("FCM_API_KEY"),
+    "FCM_API_KEY": env("FCM_API_KEY", default="fcm_api_key"),
     "APNS_CERTIFICATE": "/path/to/your/certificate.pem",
     "APNS_TOPIC": "com.example.push_test",
 }
