@@ -29,7 +29,34 @@ class CategorySerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        print(data)
         if data["child"] == []:
             del data["child"]
         return data
+
+
+class CategoryUnlimSerializer(CategorySerializer):
+    """
+    Categories including unlim package fields
+    """
+
+    class Meta:
+        model = Category
+        fields = [field for field in CategorySerializer.Meta.fields] + [
+            "unlim_price_15",
+            "unlim_price_30",
+            "unlim_price_90",
+        ]
+
+
+class CategoryBaseSerializer(serializers.ModelSerializer):
+    """
+    Categories including base package fields
+    """
+
+    class Meta:
+        model = Category
+        fields = [field for field in CategorySerializer.Meta.fields if field != "child"] + [
+            "base_price_25",
+            "base_price_50",
+            "base_price_100",
+        ]

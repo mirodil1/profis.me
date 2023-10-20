@@ -29,7 +29,26 @@ class Category(TimeStampedModel):
         null=True,
         verbose_name=_("Родительская категория"),
     )
-    price = models.DecimalField(default=0, max_digits=9, decimal_places=2, verbose_name=_("Цена"))
+    price = models.DecimalField(default=0, max_digits=9, decimal_places=2, verbose_name=_("Цена за 1 отклик"))
+    base_price_25 = models.DecimalField(
+        default=0, max_digits=9, decimal_places=2, verbose_name=_("Цена пакета за 25 откликов")
+    )
+    base_price_50 = models.DecimalField(
+        default=0, max_digits=9, decimal_places=2, verbose_name=_("Цена пакета за 25 откликов")
+    )
+    base_price_100 = models.DecimalField(
+        default=0, max_digits=9, decimal_places=2, verbose_name=_("Цена пакета за 25 откликов")
+    )
+    unlim_price_15 = models.DecimalField(
+        default=0, max_digits=9, decimal_places=2, verbose_name=_("Цена пакета на 15 дней")
+    )
+    unlim_price_30 = models.DecimalField(
+        default=0, max_digits=9, decimal_places=2, verbose_name=_("Цена пакета на 30 дней")
+    )
+    unlim_price_90 = models.DecimalField(
+        default=0, max_digits=9, decimal_places=2, verbose_name=_("Цена пакета на 90 дней")
+    )
+
     order = models.PositiveIntegerField(
         default=0,
         blank=False,
