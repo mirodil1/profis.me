@@ -1,8 +1,10 @@
+from django.utils import timezone
 from django.utils.translation import gettext as _
-from rest_framework import serializers
+from rest_framework import serializers, validators
 
 from profis.categories.models import Category
 from profis.categories.serializers import CategorySerializer
+from profis.subscription.models import UserPlan
 from profis.tasks.models import Task, TaskAddress, TaskImage, TaskResponse
 from profis.users.serializers import UserSerializer
 
@@ -146,7 +148,7 @@ class TaskResponseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TaskResponse
-        fields = ["id", "task", "worker", "price", "text", "status"]
+        fields = ["id", "task", "worker", "price", "text", "status", "response_type"]
 
 
 class TaskResponseCreateSerializer(serializers.ModelSerializer):
@@ -155,16 +157,53 @@ class TaskResponseCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TaskResponse
-        fields = ["task", "worker", "price", "text", "status"]
+        fields = ["task", "worker", "price", "text", "status", "response_type"]
+        validators = [
+            validators.UniqueTogetherValidator(
+                queryset=TaskResponse.objects.all(),
+                fields=["worker", "task"],
+                message=_("`Исполнитель` и `задание` должны быть уникальными"),
+            )
+        ]
 
     def validate(self, validated_data):
         task = validated_data.get("task", None)
         worker = validated_data.get("worker", None)
+        response_type = validated_data.get("response_type", None)
+
+        if worker and task:
+            user_balance = worker.userwallet.balance
+            price = task.category.price
+            post_price = task.category.post_price
+
+        if not task.status == Task.Status.OPEN:
+            raise serializers.ValidationError(_("Задание не активно"))
 
         if worker == task.owner:
             raise serializers.ValidationError(_("Вы не можете выполнить свою задачу"))
 
-        if worker.userwallet.balance < task.category.price:
-            raise serializers.ValidationError(_("Недостаточно средств"))
+        if response_type:
+            if response_type == TaskResponse.ResponseType.PLAIN:
+                if user_balance < price:
+                    raise serializers.ValidationError(_("Недостаточно средств"))
 
+            elif response_type == TaskResponse.ResponseType.POST:
+                if user_balance < post_price:
+                    raise serializers.ValidationError(_("Недостаточно средств"))
+
+            elif response_type == TaskResponse.ResponseType.UNLIM:
+                if not worker.userplan_set.filter(
+                    plan_type=UserPlan.PlanType.UNLIM,
+                    expired_at__gt=timezone.now(),
+                    categories__in=[task.category, task.category.parent_category],
+                ).exists():
+                    raise serializers.ValidationError(_("У вас нет активных тарифов"))
+
+            elif response_type == TaskResponse.ResponseType.BASE:
+                if not worker.userplan_set.filter(
+                    plan_type=UserPlan.PlanType.BASE,
+                    categories=task.category.parent_category,
+                    expired_at__gt=timezone.now(),
+                ).exists():
+                    raise serializers.ValidationError(_("У вас нет активных тарифов"))
         return validated_data

@@ -1,16 +1,19 @@
 from typing import Any
 
+from django.db.models import F
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema
+from rest_framework import status
 from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
+from profis.subscription.models import UserPlan
 from profis.tasks.models import Task, TaskResponse
 from profis.tasks.permissions import IsWorker
 from profis.tasks.serializers import (
@@ -48,7 +51,7 @@ class TaskCreateViewSet(CreateModelMixin, UpdateModelMixin, GenericViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskCreateSerializer
     lookup_field = "id"
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
 
 @extend_schema(tags=["task-responses"])
@@ -67,7 +70,7 @@ class TaskResponseListViewSet(ListModelMixin, GenericViewSet):
 
 @extend_schema(tags=["task-responses"])
 class TaskResponseCraeteViewSet(CreateModelMixin, GenericViewSet):
-    queryset = TaskResponse.objects.all()
+    queryset = TaskResponse.objects.all().select_related()
     serializer_class = TaskResponseCreateSerializer
     permission_classes = [IsWorker, IsAuthenticated]
 
@@ -76,24 +79,36 @@ class TaskResponseCraeteViewSet(CreateModelMixin, GenericViewSet):
         if serializer.is_valid(raise_exception=True):
             # Get the user making the request
             user = request.user
-            balance = user.userwallet.balance
             # Get the task for which the response is being created
             task = serializer.validated_data["task"]
-            price = task.category.price
-            # Check if the user has already responded to this task
-            existing_response = TaskResponse.objects.filter(task=task, worker=user).exists()
-            if existing_response:
-                # User has already responded to this task
-                return Response(
-                    {"error": _("Пользователь уже откликнулся на это задание")}, status=HTTP_400_BAD_REQUEST
-                )
-            else:
-                balance -= price
-                user.userwallet.balance = balance
+
+            response_type = serializer.validated_data["response_type"]
+            if response_type == TaskResponse.ResponseType.PLAIN:
+                # Get category price
+                price = task.category.price
+
+                user.userwallet.balance = F("balance") - price
                 user.userwallet.save()
-                self.perform_create(serializer)
-                headers = self.get_success_headers(serializer.data)
-                return Response(serializer.data, status=HTTP_201_CREATED, headers=headers)
+            # elif response_type == TaskResponse.ResponseType.POST:
+            #     pass
+            elif response_type == TaskResponse.ResponseType.BASE:
+                plan = user.userplan_set.get(
+                    plan_type=UserPlan.PlanType.BASE,
+                    expired_at__gt=timezone.now(),
+                    categories=task.category.parent_category,
+                )
+                if plan.number_of_responses > 0:
+                    plan.number_of_responses = F("number_of_responses") - 1
+                    plan.save()
+                else:
+                    response = {"error": "Нет откликов"}
+                    return Response(response, status=status.HTTP_400_BAD_REQUEST)
+            # elif response_type == TaskResponse.ResponseType.UNLIM:
+            #     pass
+
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 @extend_schema(tags=["user-tasks"])
@@ -148,9 +163,9 @@ class TaskResponseWorkerAPIView(APIView):
                 task.status = Task.Status.IN_PROGRESS
                 task.save()
 
-                return Response(status=HTTP_200_OK)
+                return Response(status=status.HTTP_200_OK)
             except Exception as e:
-                return Response({"error": str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             # Task already has a worker
-            return Response({"error": _("У задачи уже есть исполнитель.")}, status=HTTP_400_BAD_REQUEST)
+            return Response({"error": _("У задачи уже есть исполнитель.")}, status=status.HTTP_400_BAD_REQUEST)
