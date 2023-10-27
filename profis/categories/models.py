@@ -30,6 +30,7 @@ class Category(TimeStampedModel):
         verbose_name=_("Родительская категория"),
     )
     price = models.DecimalField(default=0, max_digits=9, decimal_places=2, verbose_name=_("Цена за 1 отклик"))
+    post_price = models.DecimalField(default=0, max_digits=9, decimal_places=2, verbose_name=_("Цена после оплаты"))
     base_price_25 = models.DecimalField(
         default=0, max_digits=9, decimal_places=2, verbose_name=_("Цена пакета за 25 откликов")
     )
@@ -59,6 +60,14 @@ class Category(TimeStampedModel):
         ordering = ["order"]
         verbose_name = _("Категория")
         verbose_name_plural = _("Категории")
+
+    def get_level(self):
+        level = 0
+        current_category = self
+        while current_category.parent_category is not None:
+            level += 1
+            current_category = current_category.parent_category
+        return level
 
     def save(self, *args, **kwargs):
         self.slug = defaultfilters.slugify(unidecode(self.name))

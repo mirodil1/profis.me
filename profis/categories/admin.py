@@ -35,7 +35,7 @@ class CategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
     fieldsets = (
         (
             _("Общая информация"),
-            {"fields": ("name", "parent_category", "icon", "price")},
+            {"fields": ("name", "parent_category", "icon", "price", "post_price")},
         ),
         (
             _("Базовый тариф"),
