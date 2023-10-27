@@ -26,6 +26,7 @@ urlpatterns += [
     path("api/categories/", include("profis.categories.urls", namespace="categories")),
     path("api/tasks/", include("profis.tasks.urls", namespace="tasks")),
     path("api/ratings/", include("profis.ratings.urls", namespace="ratings")),
+    path("api/subscriptions/", include("profis.subscription.urls", namespace="subscriptions")),
     # DRF auth token
     path("auth-token/", obtain_auth_token),
     path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
