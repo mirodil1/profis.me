@@ -102,9 +102,9 @@ class TaskAddress(TimeStampedModel):
     point = models.CharField(choices=Point.choices, default=Point.A, verbose_name=_("Точка"))
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["task", "point"], name="unique_task_point"),
-        ]
+        # constraints = [
+        #     models.UniqueConstraint(fields=["task", "point"], name="unique_task_point"),
+        # ]
         verbose_name = _("Адрес")
         verbose_name_plural = _("Адреса")
 
@@ -116,6 +116,7 @@ class TaskResponse(TimeStampedModel):
     class STATUS(models.TextChoices):
         PENDING = "pending", _("Рассматриваемый")
         ACCEPTED = "accepted", _("Принято")
+        REJECTED = "rejected", _("Отказано")
 
     class ResponseType(models.TextChoices):
         PLAIN = "plain", _("Обычный")

@@ -26,7 +26,7 @@ from profis.tasks.serializers import (
 
 @extend_schema(tags=["tasks"])
 class TaskListRetrieveViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
-    queryset = Task.objects.all()
+    queryset = Task.objects.all().select_related()
     serializer_class = TaskSerializer
     lookup_field = "id"
 
@@ -51,7 +51,11 @@ class TaskCreateViewSet(CreateModelMixin, UpdateModelMixin, GenericViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskCreateSerializer
     lookup_field = "id"
-    permission_classes = [IsAuthenticated]
+
+    # permission_classes = [IsAuthenticated]
+    def update(self, request, *args, **kwargs):
+        kwargs["partial"] = True
+        return super().update(request, *args, **kwargs)
 
 
 @extend_schema(tags=["task-responses"])
@@ -162,6 +166,8 @@ class TaskResponseWorkerAPIView(APIView):
                 task.worker_id = worker_id
                 task.status = Task.Status.IN_PROGRESS
                 task.save()
+
+                TaskResponse.objects.filter(task=task).update(status=TaskResponse.STATUS.REJECTED)
 
                 return Response(status=status.HTTP_200_OK)
             except Exception as e:

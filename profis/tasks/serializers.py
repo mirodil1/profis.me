@@ -10,18 +10,16 @@ from profis.users.serializers import UserSerializer
 
 
 class TaskAddressSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField()
+
     class Meta:
         model = TaskAddress
-        fields = [
-            "id",
-            "name",
-            "longitude",
-            "latitude",
-            "point",
-        ]
+        fields = ["id", "name", "longitude", "latitude", "point"]
 
 
 class TaskImageSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField()
+
     class Meta:
         model = TaskImage
         fields = [
@@ -57,15 +55,11 @@ class TaskSerializer(serializers.ModelSerializer):
 
 
 class TaskCreateSerializer(serializers.ModelSerializer):
-    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), write_only=True)
-    file = serializers.FileField(write_only=True, required=False)
-    uploaded_images = serializers.ListField(
-        child=serializers.ImageField(max_length=1000, allow_empty_file=False, use_url=False),
-        write_only=True,
-        required=False,
-    )
-    address = TaskAddressSerializer(many=True, allow_empty=True)
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
+    file = serializers.FileField(required=False)
+    address = TaskAddressSerializer(many=True)
     owner = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    images = TaskImageSerializer(many=True)
 
     class Meta:
         model = Task
@@ -78,14 +72,14 @@ class TaskCreateSerializer(serializers.ModelSerializer):
             "description",
             "phone_number",
             "file",
-            "uploaded_images",
+            "images",
             "address",
             "start_time",
             "finish_time",
         ]
 
     def create(self, validated_data):
-        uploaded_images = validated_data.pop("uploaded_images", None)
+        images = validated_data.pop("images", None)
         addresses = validated_data.pop("address", None)
         task = Task.objects.create(**validated_data)
         if addresses:
@@ -98,33 +92,53 @@ class TaskCreateSerializer(serializers.ModelSerializer):
                     latitude=address["latitude"],
                     point=address["point"],
                 )
-        if uploaded_images:
-            for image in uploaded_images:
+        if images:
+            for image in images:
                 TaskImage.objects.create(task=task, image=image)
         return task
 
     def update(self, instance, validated_data):
-        uploaded_images = validated_data.pop("uploaded_images", None)
-        print(uploaded_images)
-        # if uploaded_images is not None:
-        #     print(uploaded_images)
-        #     obj_mapping = {obj.id: obj for obj in instance.images.all()}
-        #     for img in uploaded_images:
-        #         if "id" in img:
-        #             print(obj.image)
-        #             # Update existing object
-        #             obj_id = img["id"]
-        #             obj = obj_mapping.get(obj_id, None)
-        #             if obj is not None:
-        #                 obj.image = img
-        #                 obj.save()
-        #         else:
-        #             # Create new object
-        #             TaskImage.objects.create(
-        #                 task=instance,
-        #                 image=img
-        #             )
-        # Update remaining fields of TutorProfileSerializer
+        images = validated_data.pop("images", None)
+        addresses = validated_data.pop("address", None)
+        obj_mapping = {obj.id: obj for obj in instance.images.all()}
+
+        if images:
+            for img in images:
+                if "id" not in img:
+                    # Create new image
+                    TaskImage.objects.create(task=instance, image=img["image"])
+            for obj_id, obj in obj_mapping.items():
+                if obj_id not in [img.get("id") for img in images]:
+                    obj.delete()
+
+        if addresses:
+            obj_mapping = {obj.id: obj for obj in instance.address.all()}
+            for address in addresses:
+                if "id" in address:
+                    # Update existing address
+                    obj_id = address["id"]
+                    obj = obj_mapping.get(obj_id, None)
+                    if obj is not None:
+                        obj.name = address["name"]
+                        obj.longitude = address["longitude"]
+                        obj.latitude = address["latitude"]
+                        obj.point = address["point"]
+                        obj.save()
+                else:
+                    # Create new address
+                    if not TaskAddress.objects.filter(task=instance, point=address["point"]).exists():
+                        TaskAddress.objects.create(
+                            task=instance,
+                            name=address["name"],
+                            latitude=address["latitude"],
+                            longitude=address["longitude"],
+                            point=address["point"],
+                        )
+                    else:
+                        raise serializers.ValidationError(_("Адрес с той же задачей и точкой уже существует"))
+            for obj_id, obj in obj_mapping.items():
+                if obj_id not in [address.get("id") for address in addresses]:
+                    obj.delete()
         for key, value in validated_data.items():
             setattr(instance, key, value)
         instance.save()
