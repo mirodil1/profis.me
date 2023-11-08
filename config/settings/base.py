@@ -93,6 +93,7 @@ LOCAL_APPS = [
     "profis.tasks",
     "profis.ratings",
     "profis.subscription",
+    "profis.chats",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -150,6 +151,18 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
 ]
+
+# CHANNELS
+# ------------------------------------------------------------------------------
+# https://github.com/django/channels_redis
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": env.list("REDIS_URL"),
+        },
+    },
+}
 
 # STATIC
 # ------------------------------------------------------------------------------
@@ -330,7 +343,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
     ),
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    # "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 # dj-rest-auth https://dj-rest-auth.readthedocs.io/en/latest/configuration.html
@@ -356,6 +369,8 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Documentation of API endpoints of profis.me",
     "VERSION": "1.0.0",
     "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
+    "COMPONENT_SPLIT_REQUEST": True,
+    # "PARSER_WHITELIST": ["rest_framework.parsers.MultiPartParser"],
 }
 
 # django-push-notifications - https://github.com/jazzband/django-push-notifications
