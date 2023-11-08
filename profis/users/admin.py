@@ -17,7 +17,8 @@ if settings.DJANGO_ADMIN_FORCE_ALLAUTH:
 
 class UserWalletInline(admin.StackedInline):
     model = UserWallet
-    readonly_fields = ["id", "user", "balance", "created_at"]
+    # exclude = ["id"]
+    # readonly_fields = ["balance"]
 
 
 @admin.register(User)
@@ -48,7 +49,7 @@ class UserAdmin(auth_admin.UserAdmin):
         (_("Важные даты"), {"fields": ("last_login", "date_joined")}),
         (None, {"fields": ("email", "password")}),
     )
-    list_display = ["phone_number", "first_name", "last_name", "is_worker", "email", "is_superuser"]
+    list_display = ["id", "phone_number", "first_name", "last_name", "is_worker", "email", "is_superuser"]
     list_filter = auth_admin.UserAdmin.list_filter + ("is_worker",)
     search_fields = ["first_name", "last_name"]
     ordering = ["id"]

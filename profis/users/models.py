@@ -73,7 +73,7 @@ class UserWallet(TimeStampedModel):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True, verbose_name=_("ID"))
     user = models.OneToOneField(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_("Пользователь"))
-    balance = models.PositiveIntegerField(default=0, verbose_name=_("Баланс"))
+    balance = models.DecimalField(default=0, max_digits=10, decimal_places=2, verbose_name=_("Баланс"))
     status = models.CharField(max_length=6, default=Status.ACTIVE, choices=Status.choices, verbose_name=_("Статус"))
 
     class Meta:
