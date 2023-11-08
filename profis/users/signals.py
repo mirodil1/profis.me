@@ -8,7 +8,7 @@ User = get_user_model()
 
 
 @receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
+def create_user_wallet(sender, instance, created, **kwargs):
     if created:
         # Create wallet for current user
         UserWallet.objects.create(user=instance)
