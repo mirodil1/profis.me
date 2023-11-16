@@ -1,6 +1,9 @@
+from parler_rest.fields import TranslatedFieldsField
+from parler_rest.serializers import TranslatableModelSerializer
 from rest_framework import serializers
 
 from profis.categories.models import Category
+from profis.utils.serializers import TranslatedSerializerMixin
 
 
 class RecursiveField(serializers.Serializer):
@@ -13,17 +16,17 @@ class RecursiveField(serializers.Serializer):
         return serializer.data
 
 
-class CategorySerializer(serializers.ModelSerializer):
+class CategorySerializer(TranslatedSerializerMixin, TranslatableModelSerializer):
+    translations = TranslatedFieldsField(shared_model=Category)
     child = RecursiveField(many=True)
 
     class Meta:
         model = Category
         fields = [
             "id",
-            "name",
+            "translations",
             "icon",
             "price",
-            "slug",
             "child",
         ]
 
@@ -48,14 +51,17 @@ class CategoryUnlimSerializer(CategorySerializer):
         ]
 
 
-class CategoryBaseSerializer(serializers.ModelSerializer):
+class CategoryBaseSerializer(TranslatedSerializerMixin, TranslatableModelSerializer):
     """
     Categories including base package fields
     """
 
+    translations = TranslatedFieldsField(shared_model=Category)
+
     class Meta:
         model = Category
-        fields = [field for field in CategorySerializer.Meta.fields if field != "child"] + [
+        fields = [
+            "translations",
             "base_price_25",
             "base_price_50",
             "base_price_100",

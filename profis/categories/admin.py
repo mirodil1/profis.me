@@ -1,16 +1,17 @@
 from typing import Any
 
-from adminsortable2.admin import SortableAdminMixin
+# from adminsortable2.admin import SortableAdminMixin
 from django.contrib import admin
 from django.db.models.query import QuerySet
 from django.http.request import HttpRequest
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from parler.admin import TranslatableAdmin, TranslatableStackedInline
 
 from profis.categories.models import Category
 
 
-class CategoryChildInline(admin.StackedInline):
+class CategoryChildInline(TranslatableStackedInline):
     model = Category
     exclude = ["slug"]
     fieldsets = (
@@ -31,7 +32,7 @@ class CategoryChildInline(admin.StackedInline):
 
 
 @admin.register(Category)
-class CategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
+class CategoryAdmin(TranslatableAdmin):
     fieldsets = (
         (
             _("Общая информация"),

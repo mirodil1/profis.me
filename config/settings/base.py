@@ -4,6 +4,7 @@ Base settings to build other settings files upon.
 from pathlib import Path
 
 import environ
+from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # profis/
@@ -25,12 +26,30 @@ DEBUG = env.bool("DJANGO_DEBUG", False)
 # In Windows, this must be set to your system time zone.
 TIME_ZONE = "Asia/Tashkent"
 # https://docs.djangoproject.com/en/dev/ref/settings/#language-code
-LANGUAGE_CODE = "Ru-ru"
+LANGUAGE_CODE = "ru"
 # https://docs.djangoproject.com/en/dev/ref/settings/#languages
 # from django.utils.translation import gettext_lazy as _
 LANGUAGES = [
-    ("ru", "Russian"),
+    ("ru", _("Русский")),
+    ("uz", _("Узбекский")),
 ]
+# https://github.com/edoburu/django-parler
+PARLER_DEFAULT_LANGUAGE_CODE = "ru"
+
+PARLER_LANGUAGES = {
+    2: (
+        {
+            "code": "ru",
+        },
+        {
+            "code": "uz",
+        },
+    ),
+    "default": {
+        "fallbacks": ["ru"],  # defaults to PARLER_DEFAULT_LANGUAGE_CODE
+        "hide_untranslated": True,  # the default; let .active_translations() return fallbacks too.
+    },
+}
 # https://docs.djangoproject.com/en/dev/ref/settings/#site-id
 SITE_ID = 2
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-i18n
@@ -84,6 +103,7 @@ THIRD_PARTY_APPS = [
     "drf_spectacular",
     "adminsortable2",
     "push_notifications",
+    "parler",
 ]
 
 LOCAL_APPS = [
@@ -108,7 +128,9 @@ MIGRATION_MODULES = {"sites": "profis.contrib.sites.migrations"}
 # https://docs.djangoproject.com/en/dev/ref/settings/#authentication-backends
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
-    "allauth.account.auth_backends.AuthenticationBackend",
+    "users.backends.phone_backend.PhoneNumberAuthBackend",
+    "users.backends.email_backend.EmailAuthBackend",
+    # "allauth.account.auth_backends.AuthenticationBackend",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 AUTH_USER_MODEL = "users.User"
@@ -143,6 +165,7 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "profis.utils.middleware.inject_accept_language",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -341,12 +364,12 @@ SOCIALACCOUNT_FORMS = {"signup": "profis.users.forms.UserSocialSignupForm"}
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.TokenAuthentication",
+        "dj_rest_auth.jwt_auth.JWTCookieAuthentication",
     ),
     # "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
-# dj-rest-auth https://dj-rest-auth.readthedocs.io/en/latest/configuration.html
+# dj-rest-auth - https://dj-rest-auth.readthedocs.io/en/latest/configuration.html
 REST_AUTH = {
     "USE_JWT": True,
     "SESSION_LOGIN": False,
@@ -356,11 +379,17 @@ REST_AUTH = {
     "JWT_AUTH_REFRESH_COOKIE": "jwt_refresh_token",
     "JWT_AUTH_RETURN_EXPIRATION": True,
     "JWT_AUTH_HTTPONLY": False,
+    "REGISTER_SERIALIZER": "profis.users.serializers.UserRegisterSerializer",
+    "LOGIN_SERIALIZER": "profis.users.serializers.UserLoginSerializer",
     "OLD_PASSWORD_FIELD_ENABLED": True,
     "LOGOUT_ON_PASSWORD_CHANGE": True,
 }
+
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
 CORS_URLS_REGEX = r"^/api/.*$"
+
+# django-phonenumber-field - https://github.com/stefanfoulis/django-phonenumber-field
+PHONENUMBER_DEFAULT_REGION = "UZ"
 
 # By Default swagger ui is available only to admin user(s). You can change permission classes to change that
 # See more configuration options at https://drf-spectacular.readthedocs.io/en/latest/settings.html#settings

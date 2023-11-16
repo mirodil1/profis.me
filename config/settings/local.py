@@ -64,3 +64,10 @@ INSTALLED_APPS += ["django_extensions"]  # noqa: F405
 CELERY_TASK_EAGER_PROPAGATES = True
 # Your stuff...
 # ------------------------------------------------------------------------------
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# EMAIL_USE_TLS = True
+# EMAIL_HOST = "smtp.gmail.com"
+# EMAIL_HOST_USER = "youremail@gmail.com"
+# EMAIL_HOST_PASSWORD = "email_password"
+# EMAIL_PORT = 587

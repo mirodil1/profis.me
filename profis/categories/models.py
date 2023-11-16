@@ -2,18 +2,25 @@ from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.template import defaultfilters
 from django.utils.translation import gettext_lazy as _
+from parler.models import TranslatableModel, TranslatedFields
 from unidecode import unidecode
 
 from profis.core.models import TimeStampedModel
 
 
-class Category(TimeStampedModel):
+class Category(TimeStampedModel, TranslatableModel):
     """
     Category model
     """
 
-    name = models.CharField(max_length=255, verbose_name=_("Категория"))
-    slug = models.SlugField(max_length=255, unique=True)
+    translations = TranslatedFields(
+        name=models.CharField(max_length=255, db_index=True, verbose_name=_("Категория")),
+        slug=models.SlugField(
+            max_length=255,
+            db_index=True,
+        ),
+        meta={"unique_together": [("slug", "language_code")]},
+    )
     icon = models.FileField(
         upload_to="category",
         null=True,
@@ -57,7 +64,6 @@ class Category(TimeStampedModel):
     )
 
     class Meta:
-        ordering = ["order"]
         verbose_name = _("Категория")
         verbose_name_plural = _("Категории")
 
@@ -73,5 +79,5 @@ class Category(TimeStampedModel):
         self.slug = defaultfilters.slugify(unidecode(self.name))
         return super().save(*args, **kwargs)
 
-    def __str__(self) -> str:
+    def __unicode__(self) -> str:
         return self.name
