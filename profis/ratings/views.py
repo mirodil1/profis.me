@@ -40,7 +40,7 @@ class OrdererTaskRatingViewSet(ListModelMixin, GenericViewSet):
         return qs.filter(task__worker__id=user_id).exclude(worker__isnull=True).select_related("task", "task__owner")
 
 
-@extend_schema(tags=["ratings"], description="<h3><li>Orderer rate the worker after the task has finished</li><h3>")
+@extend_schema(tags=["ratings"], description="<h3><li>Worker rate the orderer after the task has finished</li><h3>")
 class WorkerTaskRatingCreateViewSet(CreateModelMixin, GenericViewSet):
     serializer_class = WorkerTaskRatingCreateSerializer
     queryset = TaskRating.objects.all()

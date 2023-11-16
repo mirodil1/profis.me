@@ -24,11 +24,7 @@ class TaskRating(TimeStampedModel):
         verbose_name=_("Заказчик"),
     )
     task = models.ForeignKey(to=Task, on_delete=models.CASCADE, verbose_name=_("Задание"))
-    quality = models.PositiveSmallIntegerField(default=0, verbose_name=_("Качество"))
-    politeness = models.PositiveSmallIntegerField(default=0, verbose_name=_("Вежливость"))
-    punctuality = models.PositiveSmallIntegerField(default=0, verbose_name=_("Пунктуальность"))
-    adequacy = models.PositiveSmallIntegerField(default=0, verbose_name=_("Адекватность"))
-    cost_of_services = models.PositiveSmallIntegerField(default=0, verbose_name=_("Стоимость услуг"))
+    score = models.PositiveSmallIntegerField(default=0, verbose_name=_("Балл"))
     review = models.TextField(verbose_name=_("Отзыв"))
 
     class Meta:
@@ -38,3 +34,6 @@ class TaskRating(TimeStampedModel):
             models.UniqueConstraint(fields=["worker", "task"], name="unique_worker_rating"),
             models.UniqueConstraint(fields=["orderer", "task"], name="unique_orderer_rating"),
         ]
+
+    def __str__(self) -> str:
+        return f"{self.orderer if self.orderer else self.worker} - {self.score}"

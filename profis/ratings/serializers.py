@@ -15,11 +15,8 @@ class WorkerTaskRatingSerializer(serializers.ModelSerializer):
         fields = [
             "worker",
             "task",
-            "politeness",
-            "punctuality",
-            "adequacy",
             "review",
-            "created_at",
+            "score",
         ]
 
     def get_worker(self, obj):
@@ -40,9 +37,7 @@ class OrdererTaskRatingSerializer(serializers.ModelSerializer):
         fields = [
             "orderer",
             "task",
-            "politeness",
-            "quality",
-            "cost_of_services",
+            "score",
             "review",
             "created_at",
         ]
@@ -66,27 +61,29 @@ class WorkerTaskRatingCreateSerializer(serializers.ModelSerializer):
             validators.UniqueTogetherValidator(
                 queryset=TaskRating.objects.all(),
                 fields=["worker", "task"],
-                message=_("The fields worker and task must be a unique set."),
+                message=_("Рейтинг с той же задачей и исполнителем уже существует"),
             )
         ]
         fields = [
             "worker",
             "task",
-            "politeness",
-            "punctuality",
-            "adequacy",
+            "score",
             "review",
         ]
 
-    def validate(self, data):
-        worker = data.get("worker")
-        task = data.get("task")
+    def validate(self, validated_data):
+        worker = validated_data.get("worker")
+        task = validated_data.get("task")
 
         # Check if the worker is the same as the orderer (owner of the task)
         if worker == task.owner:
-            raise ValidationError(_("Вы не можете оценивать себя как исполнителя."))
+            raise ValidationError(_("Вы не можете оценивать себя как исполнителя"))
 
-        return data
+        # Check if the worker is related to this task
+        if worker != task.worker:
+            raise ValidationError(_("вы не являетесь исполнителем этой заданий"))
+
+        return validated_data
 
 
 class OrdererTaskRatingCreateSerializer(serializers.ModelSerializer):
@@ -99,14 +96,26 @@ class OrdererTaskRatingCreateSerializer(serializers.ModelSerializer):
             validators.UniqueTogetherValidator(
                 queryset=TaskRating.objects.all(),
                 fields=["orderer", "task"],
-                message=_("The fields orderer and task must be a unique set."),
+                message=_("Рейтинг с той же задачей и заказчиком уже существует"),
             )
         ]
         fields = [
             "orderer",
             "task",
-            "politeness",
-            "quality",
-            "cost_of_services",
+            "score",
             "review",
         ]
+
+    def validate(self, validated_data):
+        orderer = validated_data.get("orderer")
+        task = validated_data.get("task")
+
+        # Check if the worker is the same as the orderer (owner of the task)
+        if orderer != task.owner:
+            raise ValidationError(_("Вы не являетесь заказчиком этой заданий"))
+
+        # Check if the orderer is not worker
+        if orderer == task.worker:
+            raise ValidationError(_("Вы не можете оценивать себя как заказчика"))
+
+        return validated_data
