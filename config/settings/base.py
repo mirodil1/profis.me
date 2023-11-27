@@ -78,11 +78,13 @@ WSGI_APPLICATION = "config.wsgi.application"
 # ------------------------------------------------------------------------------
 DJANGO_APPS = [
     "django.contrib.auth",
+    "django.contrib.postgres",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.sites",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.gis",
     # "django.contrib.humanize", # Handy template tags
     "jazzmin",
     "django.contrib.admin",
@@ -98,12 +100,14 @@ THIRD_PARTY_APPS = [
     "dj_rest_auth.registration",
     "django_celery_beat",
     "rest_framework",
+    "rest_framework_gis",
     "rest_framework.authtoken",
     "corsheaders",
     "drf_spectacular",
     "adminsortable2",
     "push_notifications",
     "parler",
+    "django_filters",
 ]
 
 LOCAL_APPS = [
@@ -366,6 +370,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
         "dj_rest_auth.jwt_auth.JWTCookieAuthentication",
     ),
+    "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
     # "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
