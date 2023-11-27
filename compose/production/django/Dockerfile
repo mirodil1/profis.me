@@ -42,6 +42,11 @@ RUN addgroup --system django \
 RUN apt-get update && apt-get install --no-install-recommends -y \
   # psycopg2 dependencies
   libpq-dev \
+  # postgis dependencies
+  binutils \
+  libgdal-dev \
+  libproj-dev \
+  gdal-bin \
   # Translations dependencies
   gettext \
   # cleaning up unused files
