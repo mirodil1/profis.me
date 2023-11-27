@@ -1,6 +1,8 @@
+from django.contrib.gis.geos import Point
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework import serializers, validators
+from rest_framework_gis.serializers import GeoModelSerializer
 
 from profis.categories.models import Category
 from profis.categories.serializers import CategorySerializer
@@ -9,12 +11,13 @@ from profis.tasks.models import Task, TaskAddress, TaskImage, TaskResponse
 from profis.users.serializers import UserSerializer
 
 
-class TaskAddressSerializer(serializers.ModelSerializer):
+class TaskAddressSerializer(GeoModelSerializer):
     id = serializers.IntegerField()
 
     class Meta:
         model = TaskAddress
-        fields = ["id", "name", "longitude", "latitude", "point"]
+        geo_field = "coords.coordinates"
+        fields = ["id", "name", "coords", "longitude", "latitude", "point"]
 
 
 class TaskImageSerializer(serializers.ModelSerializer):
@@ -85,11 +88,11 @@ class TaskCreateSerializer(serializers.ModelSerializer):
         if addresses:
             for address in addresses:
                 address = dict(address)
+                point = Point(address["latitude"], address["longitude"])
                 TaskAddress.objects.create(
                     task=task,
                     name=address["name"],
-                    longitude=address["longitude"],
-                    latitude=address["latitude"],
+                    coords=point,
                     point=address["point"],
                 )
         if images:

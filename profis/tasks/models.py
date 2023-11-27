@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.gis.db.models import PointField
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -41,6 +42,9 @@ class Task(TimeStampedModel):
     start_time = models.DateTimeField(null=True, blank=True, verbose_name=_("Время начала"))
     finish_time = models.DateTimeField(null=True, blank=True, verbose_name=_("Время окончания"))
     file = models.FileField(null=True, blank=True, verbose_name=_("Файл"))
+    is_remote = models.BooleanField(default=False, verbose_name=_("Удалённо"))
+    is_business = models.BooleanField(default=False, verbose_name=_("Бизнес-задание"))
+    private_information = models.TextField(null=True, blank=True, verbose_name=_("Приватная инфомация"))
     number_of_views = models.PositiveIntegerField(default=0, verbose_name=_("Просмотры"))
 
     class Meta:
@@ -87,6 +91,7 @@ class TaskAddress(TimeStampedModel):
 
     task = models.ForeignKey(to=Task, on_delete=models.CASCADE, related_name="address", verbose_name=_("Задание"))
     name = models.CharField(max_length=255, verbose_name=_("Название"))
+    coords = PointField(null=True, blank=True, verbose_name=_("Координата"), srid=4326)
     longitude = models.DecimalField(
         max_digits=9,
         decimal_places=6,

@@ -4,8 +4,11 @@ from django.db.models import F
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from drf_spectacular.utils import extend_schema
+from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
+from rest_framework.filters import SearchFilter
 from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -14,6 +17,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
 from profis.subscription.models import UserPlan
+from profis.tasks.filters import TaskFilter
 from profis.tasks.models import Task, TaskResponse
 from profis.tasks.permissions import IsWorker
 from profis.tasks.serializers import (
@@ -24,11 +28,24 @@ from profis.tasks.serializers import (
 )
 
 
-@extend_schema(tags=["tasks"])
+@extend_schema(
+    tags=["tasks"],
+    parameters=[
+        OpenApiParameter(
+            name="distance",
+            location=OpenApiParameter.QUERY,
+            type=OpenApiTypes.INT,
+            # description="Query name for searching posts.",
+        ),
+    ],
+)
 class TaskListRetrieveViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     queryset = Task.objects.all().select_related()
     serializer_class = TaskSerializer
     lookup_field = "id"
+    filter_backends = [SearchFilter, DjangoFilterBackend]
+    search_fields = ["name", "description"]
+    filterset_class = TaskFilter
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -74,6 +91,8 @@ class TaskResponseListViewSet(ListModelMixin, GenericViewSet):
 
 @extend_schema(tags=["task-responses"])
 class TaskResponseCraeteViewSet(CreateModelMixin, GenericViewSet):
+    """Make response to tasks"""
+
     queryset = TaskResponse.objects.all().select_related()
     serializer_class = TaskResponseCreateSerializer
     permission_classes = [IsWorker, IsAuthenticated]
@@ -158,6 +177,18 @@ class TaskResponseWorkerAPIView(APIView):
         task_response = get_object_or_404(TaskResponse, task=task, worker_id=worker_id)
         if not task.worker:
             try:
+                if task_response.response_type == TaskResponse.ResponseType.POST:
+                    print(task_response.worker.userwallet.balance)
+                    if task_response.worker.userwallet.balance >= task.category.post_price:
+                        task_response.worker.userwallet.balance -= task.category.post_price
+                        task_response.worker.userwallet.save()
+                        print("saved")
+                        print(task_response.worker.userwallet.balance)
+                    else:
+                        return Response(
+                            {"error": _("У исполнителя недостаточно средств.")}, status=status.HTTP_400_BAD_REQUEST
+                        )
+
                 # Update TaskResponse status
                 task_response.status = TaskResponse.STATUS.ACCEPTED
                 task_response.save()
