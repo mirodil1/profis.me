@@ -12,3 +12,14 @@ REDIS_URL=redis://redis:6379/0
 # Flower
 CELERY_FLOWER_USER=lQNvcxJsmzupMVEYySnBqwOhUIcWowrs
 CELERY_FLOWER_PASSWORD=ozVg4f0btjEUfiQmusc7lANxCJMKUeMo93pSZi36il0KgN8vXV4UpODmbrpBN4jq
+
+# Push notification
+FCM_API_KEY=AIzaSyCBnWymYwG80dDBKxeeFO6QiN2RxgrHF3I
+
+# Payme
+PAYME_ID=6576b0b0cd5b3ae648546125
+PAYME_KEY=gubzS62kgbDHkntZdjqAs7MWfmCNG8h922WF
+PAYME_URL=https://test.paycom.uz/
+PAYME_CALL_BACK_URL=https://grand-peacock-truly.ngrok-free.app/api/payment/payme
+PAYME_MIN_AMOUNT=10000
+PAYME_ACCOUNT=user_id
