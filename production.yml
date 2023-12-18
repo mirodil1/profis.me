@@ -1,10 +1,10 @@
 version: '3'
 
 volumes:
-  production_postgres_data: {}
-  production_postgres_data_backups: {}
-  production_traefik: {}
-  production_django_media: {}
+  postgres_data: {}
+  postgres_data_backups: {}
+  django_media: {}
+  django_static: {}
 
 services:
   django: &django
@@ -12,9 +12,10 @@ services:
       context: .
       dockerfile: ./compose/production/django/Dockerfile
 
-    image: profis_production_django
+    image: profis_django
     volumes:
-      - production_django_media:/app/profis/media
+      - django_media:/app/profis/media
+      - django_static:/app/profis/staticfiles
     depends_on:
       - postgres
       - redis
@@ -27,51 +28,40 @@ services:
     build:
       context: .
       dockerfile: ./compose/production/postgres/Dockerfile
-    image: profis_production_postgres
+    image: profis_postgres
     volumes:
-      - production_postgres_data:/var/lib/postgresql/data
-      - production_postgres_data_backups:/backups
+      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_backups:/backups
     env_file:
       - ./.envs/.production/.postgres
 
-  traefik:
+  nginx:
     build:
       context: .
-      dockerfile: ./compose/production/traefik/Dockerfile
-    image: profis_production_traefik
+      dockerfile: ./compose/production/nginx/Dockerfile
+    image: profis_nginx
     depends_on:
       - django
     volumes:
-      - production_traefik:/etc/traefik/acme
-    ports:
-      - '0.0.0.0:80:80'
-      - '0.0.0.0:443:443'
-      - '0.0.0.0:5555:5555'
+      - django_media:/usr/share/nginx/media:ro
+      - django_media:/usr/share/nginx/staticfiles:ro
 
   redis:
     image: redis:6
 
   celeryworker:
     <<: *django
-    image: profis_production_celeryworker
+    image: profis_celeryworker
     command: /start-celeryworker
 
   celerybeat:
     <<: *django
-    image: profis_production_celerybeat
+    image: profis_celerybeat
     command: /start-celerybeat
 
   flower:
     <<: *django
     image: profis_production_flower
+    ports:
+      - '5555:5555'
     command: /start-flower
-
-  nginx:
-    build:
-      context: .
-      dockerfile: ./compose/production/nginx/Dockerfile
-    image: profis_local_nginx
-    depends_on:
-      - django
-    volumes:
-      - production_django_media:/usr/share/nginx/media:ro
