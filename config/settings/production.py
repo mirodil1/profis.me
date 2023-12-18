@@ -7,6 +7,8 @@ from .base import env
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["profis.me"])
+# https://docs.djangoproject.com/en/dev/ref/settings/#csrf-trusted-origins
+CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS")
 
 # DATABASES
 # ------------------------------------------------------------------------------
@@ -142,5 +144,3 @@ LOGGING = {
 SPECTACULAR_SETTINGS["SERVERS"] = [  # noqa: F405
     {"url": "https://profis.me", "description": "Production server"},
 ]
-# Your stuff...
-# ------------------------------------------------------------------------------

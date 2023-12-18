@@ -1,6 +1,7 @@
 """
 Base settings to build other settings files upon.
 """
+import datetime
 from pathlib import Path
 
 import environ
@@ -118,6 +119,8 @@ LOCAL_APPS = [
     "profis.ratings",
     "profis.subscription",
     "profis.chats",
+    "profis.notifications",
+    "profis.transactions",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -389,9 +392,15 @@ REST_AUTH = {
     "OLD_PASSWORD_FIELD_ENABLED": True,
     "LOGOUT_ON_PASSWORD_CHANGE": True,
 }
+# djangorestframework-simplejwt https://django-rest-framework-simplejwt.readthedocs.io/en/latest/settings.html
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": datetime.timedelta(days=30),
+    "REFRESH_TOKEN_LIFETIME": datetime.timedelta(days=31),
+}
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
-CORS_URLS_REGEX = r"^/api/.*$"
+# CORS_URLS_REGEX = r"^/api/.*$"
+CORS_ALLOW_ALL_ORIGINS = True
 
 # django-phonenumber-field - https://github.com/stefanfoulis/django-phonenumber-field
 PHONENUMBER_DEFAULT_REGION = "UZ"
@@ -404,7 +413,6 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
     "COMPONENT_SPLIT_REQUEST": True,
-    # "PARSER_WHITELIST": ["rest_framework.parsers.MultiPartParser"],
 }
 
 # django-push-notifications - https://github.com/jazzband/django-push-notifications
@@ -413,3 +421,11 @@ PUSH_NOTIFICATIONS_SETTINGS = {
     "APNS_CERTIFICATE": "/path/to/your/certificate.pem",
     "APNS_TOPIC": "com.example.push_test",
 }
+
+# Payme - https://developer.help.paycom.uz/
+PAYME_ID = env.str("PAYME_ID")
+PAYME_KEY = env.str("PAYME_KEY")
+PAYME_URL = env.str("PAYME_URL")
+PAYME_CALL_BACK_URL = env.str("PAYME_CALL_BACK_URL")
+PAYME_MIN_AMOUNT = env.int("PAYME_MIN_AMOUNT", default=0)
+PAYME_ACCOUNT = env.str("PAYME_ACCOUNT")
