@@ -1,4 +1,4 @@
-from django.utils.translation import get_language, get_language_from_request
+from django.utils.translation import get_language
 
 from config.settings import base
 
@@ -10,10 +10,8 @@ class TranslatedSerializerMixin:
 
     def to_representation(self, instance):
         inst_rep = super().to_representation(instance)
-        request = self.context.get("request")
-        print(request.LANGUAGE_CODE)
-        l_code = get_language_from_request(request)
-        print(l_code)
+        # request = self.context.get("request")
+        # l_code = get_language_from_request(request)
         lang_code = get_language()
         result = {}
         for field_name, field in self.get_fields().items():
