@@ -14,6 +14,7 @@ class WalletFactory(DjangoModelFactory):
 
 
 class UserFactory(DjangoModelFactory):
+    id = Faker("random_int", min=1000, max=99999999)
     email = Faker("email")
     first_name = Faker("first_name")
     last_name = Faker("last_name")

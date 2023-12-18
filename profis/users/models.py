@@ -52,7 +52,7 @@ class User(AbstractUser):
         verbose_name_plural = _("Пользователи")
 
     def save(self, *args, **kwargs):
-        if not self._id:
+        if not self._id and self.id is not None:
             self._id = 9999 + self.id
         super().save(*args, **kwargs)
 

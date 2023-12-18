@@ -1,3 +1,4 @@
+import random
 from io import StringIO
 
 import pytest
@@ -10,6 +11,7 @@ from profis.users.models import User
 class TestUserManager:
     def test_create_user(self):
         user = User.objects.create_user(
+            id=random.randint(100, 9999),
             email="john@example.com",
             password="something-r@nd0m!",
         )
@@ -21,6 +23,7 @@ class TestUserManager:
 
     def test_create_superuser(self):
         user = User.objects.create_superuser(
+            id=random.randint(100, 9999),
             email="admin@example.com",
             password="something-r@nd0m!",
         )
@@ -31,6 +34,7 @@ class TestUserManager:
 
     def test_create_superuser_username_ignored(self):
         user = User.objects.create_superuser(
+            id=random.randint(100, 9999),
             email="test@example.com",
             password="something-r@nd0m!",
         )
