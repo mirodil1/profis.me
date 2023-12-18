@@ -12,7 +12,12 @@ User = get_user_model()
 class ChatSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chat
-        fields = ["id", "chat_name", "participants", "created_at"]
+        fields = [
+            "id",
+            "chat_name",
+            "participants",
+            "created_at",
+        ]
 
 
 class ChatCreateSerializer(serializers.ModelSerializer):
@@ -42,7 +47,15 @@ class MessageSerialzer(serializers.ModelSerializer):
 
     class Meta:
         model = Message
-        fields = ["id", "participants", "sender", "content", "file", "is_seen", "created_at"]
+        fields = [
+            "id",
+            "participants",
+            "sender",
+            "content",
+            "file",
+            "is_seen",
+            "created_at",
+        ]
 
 
 class MessageCreateSerializer(serializers.ModelSerializer):
@@ -52,7 +65,11 @@ class MessageCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Message
-        fields = ["participants", "sender", "file"]
+        fields = [
+            "participants",
+            "sender",
+            "file",
+        ]
 
     def validate(self, validated_data):
         file = validated_data.get("file", None)

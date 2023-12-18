@@ -46,47 +46,62 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if content and sender_id:
             sender = await self.get_user(user_id=sender_id)
             chat = await self.get_chat(chat_name=self.room_group_name)
-            await self.create_message(sender=sender, content=content, chat=chat)
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    "type": "chat_message",
-                    "message": content,
-                    "sender": sender.first_name,
-                },
-            )
+            if sender and chat:
+                await self.create_message(sender=sender, content=content, chat=chat)
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        "type": "chat_message",
+                        "message": content,
+                        "sender": sender.first_name,
+                    },
+                )
+            else:
+                await self.send(
+                    text_data=json.dumps(
+                        {
+                            "type": "websocket.close",
+                            "code": 1007,
+                            "error": "Something went wrong, please try again",
+                        }
+                    )
+                )
         else:
             await self.send(
                 text_data=json.dumps(
                     {
                         "type": "websocket.close",
                         "code": 1007,
-                        "text": "Unsupported payload",
+                        "error": "Unsupported payload",
                     }
                 )
             )
 
     async def chat_message(self, event):
-        message = event["message"]
+        message = event.get("message", None)
         sender = event["sender"]
-        file = event["file"]
+        file = event.get("file", None)
         await self.send(
             text_data=json.dumps(
                 {
-                    "file": file if file else None,
-                    "message": message if message else None,
+                    "file": file,
+                    "message": message,
                     "sender": sender,
                 }
             )
         )
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_layer)
-        await self.disconnect(close_code)
+        if self.scope["user"].is_authenticated:
+            await self.channel_layer.group_discard(self.room_group_name, self.channel_layer)
 
     @database_sync_to_async
     def get_chat(self, chat_name):
-        return Chat.objects.get(chat_name=chat_name)
+        try:
+            chat = Chat.objects.get(chat_name=chat_name)
+        except Chat.DoesNotExist:
+            chat = None
+        return chat
 
     @database_sync_to_async
     def get_user(self, user_id):

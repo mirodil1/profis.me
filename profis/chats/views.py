@@ -5,9 +5,11 @@ from channels.layers import get_channel_layer
 from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.mixins import CreateModelMixin, ListModelMixin
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
 from profis.chats.models import Chat, Message
@@ -78,6 +80,18 @@ class MessageListViewSet(ListModelMixin, GenericViewSet):
     serializer_class = MessageSerialzer
     queryset = Message.objects.all()
 
+    @action(detail=False, methods=["patch"])
+    def mark_as_read(self, request):
+        message_ids = request.data.get("message_ids", [])
+
+        if not isinstance(message_ids, list):
+            message_ids = [message_ids]
+
+        # Perform a bulk update to mark messages as read
+        Message.objects.filter(id__in=message_ids).update(is_read=True)
+
+        return Response(status=status.HTTP_200_OK)
+
 
 @extend_schema(tags=["chats"])
 class MessageCreateViewSet(CreateModelMixin, GenericViewSet):
@@ -113,3 +127,19 @@ class MessageCreateViewSet(CreateModelMixin, GenericViewSet):
         }
 
         return Response(response, status=status.HTTP_200_OK, headers=headers)
+
+
+@extend_schema(tags=["chats"])
+class MessageAPIView(APIView):
+    def patch(self, request, id, *args, **kwargs):
+        try:
+            message_id = id
+            message = Message.objects.get(id=message_id)
+            if message.sender != request.user and request.user in message.participants.participants.all():
+                message.is_seen = True
+                message.save()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        except Message.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
