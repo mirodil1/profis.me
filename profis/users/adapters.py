@@ -14,6 +14,13 @@ if typing.TYPE_CHECKING:
 
 
 class AccountAdapter(DefaultAccountAdapter):
+    def save_user(self, request, user, form, commit=False):
+        user = super().save_user(request, user, form, commit)
+        data = form.cleaned_data
+        user.phone_number = data.get("phone_number", None)
+        user.save()
+        return user
+
     def is_open_for_signup(self, request: HttpRequest) -> bool:
         return getattr(settings, "ACCOUNT_ALLOW_REGISTRATION", True)
 

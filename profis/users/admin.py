@@ -5,7 +5,7 @@ from django.contrib.auth import decorators, get_user_model
 from django.utils.translation import gettext_lazy as _
 
 from profis.users.forms import UserAdminChangeForm, UserAdminCreationForm
-from profis.users.models import UserWallet
+from profis.users.models import PhoneNumber, UserWallet
 
 User = get_user_model()
 
@@ -49,7 +49,7 @@ class UserAdmin(auth_admin.UserAdmin):
         (_("Важные даты"), {"fields": ("last_login", "date_joined")}),
         (None, {"fields": ("email", "password")}),
     )
-    list_display = ["id", "phone_number", "first_name", "last_name", "is_worker", "email", "is_superuser"]
+    list_display = ["id", "phone_number", "first_name", "last_name", "is_worker", "email", "is_superuser", "_id"]
     list_filter = auth_admin.UserAdmin.list_filter + ("is_worker",)
     search_fields = ["first_name", "last_name"]
     ordering = ["id"]
@@ -64,3 +64,8 @@ class UserAdmin(auth_admin.UserAdmin):
     )
     readonly_fields = ["number_of_views"]
     inlines = [UserWalletInline]
+
+
+@admin.register(PhoneNumber)
+class PhoneNumberAdmin(admin.ModelAdmin):
+    list_display = ["id", "phone_number", "user", "is_verified"]

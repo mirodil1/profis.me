@@ -39,4 +39,5 @@ class TestUserViewSet:
             "is_worker": user.is_worker,
             "work_experiance": user.work_experiance,
             "gender": user.gender,
+            "rating": user.rating,
         }

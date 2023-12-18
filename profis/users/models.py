@@ -3,12 +3,14 @@ import uuid
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import Avg, Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
 
 from profis.categories.models import Category
 from profis.core.models import TimeStampedModel
+from profis.ratings.models import TaskRating
 from profis.users.managers import UserManager
 
 
@@ -23,10 +25,13 @@ class User(AbstractUser):
         MALE = "m", _("Мужчина")
         FEMALE = "f", _("Женщина")
 
+    _id = models.IntegerField(unique=True, db_index=True, null=True)
     first_name = models.CharField(max_length=64, verbose_name=_("Имя"))
     last_name = models.CharField(max_length=64, verbose_name=_("Фамилия"))
-    phone_number = PhoneNumberField(unique=True, null=True, blank=True, verbose_name=_("Номер телефона"))
-    email = models.EmailField(_("Email"), unique=True)
+    phone_number = PhoneNumberField(
+        unique=True, null=True, blank=True, db_index=True, verbose_name=_("Номер телефона")
+    )
+    email = models.EmailField(unique=True, null=True, blank=True, verbose_name=_("Email"))
     bio = models.TextField(null=True, blank=True, verbose_name=_("Опыт, навыки и преимущества"))
     date_of_birth = models.DateField(null=True, blank=True, verbose_name=_("Дата рождения"))
     number_of_views = models.PositiveIntegerField(default=0, verbose_name=_("Просмотры"))
@@ -46,10 +51,15 @@ class User(AbstractUser):
         verbose_name = _("Пользователь")
         verbose_name_plural = _("Пользователи")
 
+    def save(self, *args, **kwargs):
+        if not self._id:
+            self._id = 9999 + self.id
+        super().save(*args, **kwargs)
+
     @property
     def age(self):
         """
-        Return the age using `date_of_birth`
+        Return age using `date_of_birth`
         """
         today = timezone.now().today()
         if self.date_of_birth:
@@ -57,8 +67,18 @@ class User(AbstractUser):
                 (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day)
             )
 
+    @property
+    def rating(self):
+        """
+        Getting avarage rating for the current user
+        """
+        avarage_score = TaskRating.objects.filter(
+            Q(task__owner=self, orderer__isnull=True) | Q(task__worker=self, worker__isnull=True)
+        ).aggregate(Avg("score", default=0))
+        return avarage_score["score__avg"]
+
     def __str__(self) -> str:
-        return self.email
+        return f"{self.last_name} {self.first_name}"
 
 
 class UserWallet(TimeStampedModel):
@@ -79,3 +99,15 @@ class UserWallet(TimeStampedModel):
     class Meta:
         verbose_name = _("Кошелек пользователя")
         verbose_name_plural = _("Кошелек пользователя")
+
+
+class PhoneNumber(TimeStampedModel):
+    user = models.OneToOneField(to=settings.AUTH_USER_MODEL, related_name="phone", on_delete=models.CASCADE)
+    phone_number = PhoneNumberField(unique=True, verbose_name=_("Номер телефона"))
+    is_verified = models.BooleanField(default=False, verbose_name=_("Статус"))
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return self.phone_number.as_e164
