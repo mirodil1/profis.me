@@ -11,7 +11,6 @@ services:
     build:
       context: .
       dockerfile: ./compose/production/django/Dockerfile
-
     image: profis_django
     volumes:
       - django_media:/app/profis/media
@@ -40,6 +39,8 @@ services:
       context: .
       dockerfile: ./compose/production/nginx/Dockerfile
     image: profis_nginx
+    ports:
+      - 8010:80
     depends_on:
       - django
     volumes:
