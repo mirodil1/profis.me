@@ -86,13 +86,13 @@ RUN chmod +x /start-flower
 
 
 RUN mkdir ${APP_HOME}/staticfiles
-RUN mkdir ${APP_HOME}/media
+RUN mkdir ${APP_HOME}/profis/media
 
 # copy application code to WORKDIR
 COPY --chown=django:django . ${APP_HOME}
 
 # make django owner of the WORKDIR directory as well.
-RUN chown django:django ${APP_HOME}
+RUN chown django:django ${APP_HOME}/*
 
 USER django
 
