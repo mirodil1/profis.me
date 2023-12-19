@@ -87,7 +87,7 @@ class UserPlanCreateSerializer(serializers.ModelSerializer):
                         },
                     )
                     if not created:
-                        # Check plan status, if active extend expiration date otherwise count by current date.
+                        # Check plan status, if active, extend expiration date otherwise count by current date.
                         if user_plan.is_active:
                             user_plan.number_of_responses = F("number_of_responses") + responses
                             user_plan.expired_at = F("expired_at") + timedelta(days=30)
@@ -112,7 +112,7 @@ class UserPlanCreateSerializer(serializers.ModelSerializer):
                         },
                     )
                     if not created:
-                        # Check plan status, if active extend expiration date otherwise count by current date.
+                        # Check plan status, if active, extend expiration date otherwise count by current date.
                         if user_plan.is_active:
                             if package_type == UserPlan.PackageType.UNLIM_15:
                                 user_plan.expired_at = F("expired_at") + timedelta(days=15)
