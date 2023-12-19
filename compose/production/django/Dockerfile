@@ -95,6 +95,13 @@ USER django
 
 RUN DATABASE_URL="" \
   CELERY_BROKER_URL="" \
+  REDIS_URL=""\
+  PAYME_ID=""\
+  PAYME_KEY=""\
+  PAYME_URL=""\
+  PAYME_CALL_BACK_URL=""\
+  PAYME_MIN_AMOUNT=10000\
+  PAYME_ACCOUNT=""\
   DJANGO_SETTINGS_MODULE="config.settings.test" \
   python manage.py compilemessages
 
