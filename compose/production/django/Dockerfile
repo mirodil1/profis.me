@@ -32,9 +32,6 @@ ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV BUILD_ENV ${BUILD_ENVIRONMENT}
 
-RUN mkdir ${APP_HOME}/staticfiles
-RUN mkdir ${APP_HOME}/media
-
 WORKDIR ${APP_HOME}
 
 RUN addgroup --system django \
@@ -90,6 +87,9 @@ RUN chmod +x /start-flower
 
 # copy application code to WORKDIR
 COPY --chown=django:django . ${APP_HOME}
+
+RUN --chown=django:django mkdir ${APP_HOME}/staticfiles
+RUN --chown=django:django mkdir ${APP_HOME}/media
 
 # make django owner of the WORKDIR directory as well.
 RUN chown django:django ${APP_HOME}
