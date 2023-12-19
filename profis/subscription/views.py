@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.mixins import CreateModelMixin, ListModelMixin
 from rest_framework.response import Response
@@ -7,11 +8,13 @@ from profis.subscription.models import UserPlan
 from profis.subscription.serializers import UserPlanCreateSerializer, UserPlanSerializer
 
 
+@extend_schema(tags=["subscription"])
 class UserPlanListViewSet(ListModelMixin, GenericViewSet):
     queryset = UserPlan.objects.all()
     serializer_class = UserPlanSerializer
 
 
+@extend_schema(tags=["subscription"])
 class UserPlanCreateViewSet(CreateModelMixin, GenericViewSet):
     queryset = UserPlan.objects.all()
     serializer_class = UserPlanCreateSerializer
