@@ -45,7 +45,7 @@ services:
       - django
     volumes:
       - django_media:/usr/share/nginx/media:ro
-      - django_media:/usr/share/nginx/staticfiles:ro
+      - django_static:/usr/share/nginx/staticfiles:ro
 
   redis:
     image: redis:6
@@ -55,10 +55,10 @@ services:
     image: profis_celeryworker
     command: /start-celeryworker
 
-  celerybeat:
-    <<: *django
-    image: profis_celerybeat
-    command: /start-celerybeat
+  # celerybeat:
+  #   <<: *django
+  #   image: profis_celerybeat
+  #   command: /start-celerybeat
 
   flower:
     <<: *django
