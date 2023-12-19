@@ -1,15 +1,14 @@
-from dj_rest_auth.registration.views import ResendEmailVerificationView, VerifyEmailView
+# from dj_rest_auth.registration.views import VerifyEmailView
 from dj_rest_auth.views import LogoutView  # , PasswordChangeView, PasswordResetConfirmView, PasswordResetView
 from django.conf import settings
 from django.conf.urls.i18n import i18n_patterns
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.urls import include, path, re_path
+from django.urls import include, path
 from django.views import defaults as default_views
 from django.views.generic import TemplateView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from rest_framework.authtoken.views import obtain_auth_token
 
 from profis.users.views import (
     GoogleLogin,
@@ -20,6 +19,9 @@ from profis.users.views import (
     UserLoginAPIView,
     UserRegisterView,
 )
+
+# from rest_framework.authtoken.views import obtain_auth_token
+
 
 urlpatterns = [
     # Django Admin, use {% url 'admin:index' %}
@@ -42,7 +44,7 @@ urlpatterns += i18n_patterns(
     path("api/notifications/", include("profis.notifications.urls", namespace="notifications")),
     path("api/payment/", include("profis.transactions.urls", namespace="transactions")),
     # DRF auth token
-    path("auth-token/", obtain_auth_token),
+    # path("auth-token/", obtain_auth_token),
     path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
     path(
         "api/docs/",
@@ -58,24 +60,17 @@ urlpatterns += i18n_patterns(
     path("api/password/reset/", PasswordResetAPIView.as_view(), name="password-reset"),
     path("api/password/reset/otp/confirm/", PasswordResetConfirmOTPAPIView.as_view(), name="password-confirm-otp"),
     path("api/password/reset/confirm/", PasswordResetConfirmAPIView.as_view(), name="password-reset-confirm"),
-    path("resend-email/", ResendEmailVerificationView.as_view(), name="rest_resend_email"),
-    re_path(
-        r"^account-confirm-email/(?P<key>[-:\w]+)/$",
-        VerifyEmailView.as_view(),
-        name="account_confirm_email",
-    ),
+    # path("resend-email/", ResendEmailVerificationView.as_view(), name="rest_resend_email"),
+    # re_path(
+    #     r"^account-confirm-email/(?P<key>[-:\w]+)/$",
+    #     VerifyEmailView.as_view(),
+    #     name="account_confirm_email",
+    # ),
     path(
         "account-email-verification-sent/",
         TemplateView.as_view(),
         name="account_email_verification_sent",
     ),
-    # path("password/reset/", PasswordResetView.as_view(), name="rest_password_reset"),
-    # path(
-    #     "password/reset/confirm/<str:uidb64>/<str:token>",
-    #     PasswordResetConfirmView.as_view(),
-    #     name="password_reset_confirm",
-    # ),
-    # path("password/change/", PasswordChangeView.as_view(), name="rest_password_change"),
     path("logout/", LogoutView.as_view(), name="rest_logout"),
     prefix_default_language=False,
 )
