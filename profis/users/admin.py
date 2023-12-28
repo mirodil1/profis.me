@@ -37,19 +37,21 @@ class UserAdmin(auth_admin.UserAdmin):
         (
             _("Права доступа"),
             {
-                "fields": (
-                    "is_active",
-                    "is_staff",
-                    "is_superuser",
-                    "groups",
-                    "user_permissions",
-                ),
+                "fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions"),
             },
         ),
         (_("Важные даты"), {"fields": ("last_login", "date_joined")}),
         (None, {"fields": ("email", "password")}),
     )
-    list_display = ["id", "phone_number", "first_name", "last_name", "is_worker", "email", "is_superuser", "_id"]
+    list_display = [
+        "_id",
+        "phone_number",
+        "first_name",
+        "last_name",
+        "is_worker",
+        "email",
+        "is_superuser",
+    ]
     list_filter = auth_admin.UserAdmin.list_filter + ("is_worker",)
     search_fields = ["first_name", "last_name"]
     ordering = ["id"]

@@ -36,8 +36,9 @@ from config.channelsmiddleware import JWTAuthMiddleware  # noqa isort:skip
 # from config.websocket import websocket_application  # noqa isort:skip
 from profis.chats.routing import websocket_urlpatterns as chat_urlpatterns  # noqa isort:skip
 from profis.notifications.routing import websocket_urlpatterns as notification_urlpatterns  # noqa isort:skip
+from profis.users.routing import websocket_urlpatterns as user_status_urlpatterns  # noqa isort:skip
 
-websocket_urlpatterns = chat_urlpatterns + notification_urlpatterns
+websocket_urlpatterns = chat_urlpatterns + notification_urlpatterns + user_status_urlpatterns
 application = ProtocolTypeRouter(
     {
         "http": django_application,

@@ -14,14 +14,13 @@ from django.utils.translation import gettext as _
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.generic import RedirectView
 from drf_spectacular.utils import extend_schema
-
-# from phonenumbers import PhoneNumber
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer
 from rest_framework.viewsets import GenericViewSet
 
 from profis.users.models import PhoneNumber
@@ -33,6 +32,8 @@ from profis.users.serializers import (
     UserLoginSerializer,
     UserRegisterSerializer,
     UserSerializer,
+    UserUpdateSerializer,
+    UserWorkerRequestSerializer,
 )
 from profis.users.tasks import send_otp_by_email, send_otp_by_phone
 
@@ -204,14 +205,27 @@ class UserViewSet(RetrieveModelMixin, ListModelMixin, UpdateModelMixin, GenericV
     queryset = User.objects.all()
     lookup_field = "id"
 
-    # def get_queryset(self, *args, **kwargs):
-    #     assert isinstance(self.request.user.id, int)
-    #     return self.queryset.filter(id=self.request.user.id)
+    def get_serializer_class(self) -> type[BaseSerializer]:
+        if self.action == "worker_request":
+            return UserWorkerRequestSerializer
+        return super().get_serializer_class()
 
     @action(detail=False)
     def me(self, request):
         serializer = UserSerializer(request.user, context={"request": request})
         return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+    @action(methods=["post"], detail=False)
+    def worker_request(self, request):
+        """
+        Request to get worker status
+        """
+        user = request.user
+        user.is_worker = True
+        serializer = UserUpdateSerializer(instance=user, data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(data={"detail": _("Ок")}, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=["users"])
@@ -247,7 +261,7 @@ class SendSMSAPIView(GenericAPIView):
         if serializer.is_valid(raise_exception=True):
             phone_number = str(serializer.validated_data["phone_number"])
 
-            otp = get_random_string(length=4, allowed_chars="0123456789")
+            otp = get_random_string(length=4, allowed_chars="123456789")
             cache.set(key=phone_number, value=otp, timeout=60)
             send_otp_by_phone.delay(phone_number=phone_number, otp=otp)
             response_data = {"message": _("Код отправлен")}

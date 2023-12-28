@@ -9,7 +9,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.validators import UniqueValidator
 
-from profis.categories.serializers import CategorySerializer
+from profis.categories.models import Category
 from profis.users.exceptions import AccountDisabledException, InvalidCredentialsException
 from profis.users.models import PhoneNumber
 from profis.users.models import User as UserType
@@ -42,8 +42,17 @@ class UserSerializer(serializers.ModelSerializer[UserType]):
         return obj.rating
 
 
-class UserCreateUpdateSerializer(serializers.ModelSerializer):
-    categories = CategorySerializer(many=True)
+class UserUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for updating user
+    """
+
+    categories = serializers.ListSerializer(
+        child=serializers.PrimaryKeyRelatedField(
+            queryset=Category.objects.all(),
+            required=True,
+        ),
+    )
 
     class Meta:
         model = User
@@ -60,6 +69,43 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
             "gender",
             "categories",
         ]
+
+    def update(self, instance, validated_data):
+        categories = validated_data.pop("categories", [])
+        instance.categories.set(categories)
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+        instance.save()
+        return instance
+
+
+class UserWorkerRequestSerializer(serializers.Serializer):
+    """
+    Serializer for requesting to get worker status
+    """
+
+    categories = serializers.ListSerializer(
+        child=serializers.PrimaryKeyRelatedField(
+            queryset=Category.objects.all(),
+            required=True,
+            write_only=True,
+        ),
+    )
+    first_name = serializers.CharField(required=True, write_only=True)
+    last_name = serializers.CharField(required=True, write_only=True)
+    middle_name = serializers.CharField(required=True, write_only=True)
+    bio = serializers.CharField(required=True, write_only=True)
+    date_of_birth = serializers.DateField(required=True, write_only=True)
+    phone_number = PhoneNumberField(required=True, write_only=True)
+    otp = serializers.CharField(required=False, write_only=True)
+
+    def validate(self, validated_data):
+        user = self.context["request"].user
+        if user.is_worker:
+            raise serializers.ValidationError(_("Вы уже получили статус исполнителя"))
+        if all(validated_data):
+            print(True)
+        return super().validate(validated_data)
 
 
 class UserRegisterSerializer(RegisterSerializer):

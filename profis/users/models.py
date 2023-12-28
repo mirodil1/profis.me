@@ -2,8 +2,9 @@ import uuid
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
-from django.db.models import Avg, Q
+from django.db.models import Avg
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
@@ -20,6 +21,8 @@ class User(AbstractUser):
     If adding fields that need to be filled at user signup,
     check forms.SignupForm and forms.SocialSignupForms accordingly.
     """
+
+    username_validator = UnicodeUsernameValidator()
 
     class Gender(models.TextChoices):
         MALE = "m", _("Мужчина")
@@ -40,9 +43,21 @@ class User(AbstractUser):
     work_experiance = models.PositiveIntegerField(null=True, blank=True, verbose_name=_("Стаж работы"))
     gender = models.CharField(choices=Gender.choices, verbose_name=_("Пол"), null=True, blank=True)
     categories = models.ManyToManyField(to=Category, related_name="user_category", verbose_name=_("Категории"))
-    username = None
+    online_status = models.SmallIntegerField(default=0, verbose_name=_("Онлайн статус"))
+    last_seen = models.DateTimeField(null=True, verbose_name=_("Последний визит"))
+    username = models.CharField(
+        _("username"),
+        null=True,
+        blank=True,
+        max_length=150,
+        unique=True,
+        validators=[username_validator],
+        error_messages={
+            "unique": _("Имя пользователя уже занято."),
+        },
+    )
 
-    USERNAME_FIELD = "email"
+    # USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     objects = UserManager()
@@ -54,6 +69,8 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):
         if not self._id and self.id is not None:
             self._id = 9999 + self.id
+        if not self.username:
+            self.username = None
         super().save(*args, **kwargs)
 
     @property
@@ -72,9 +89,7 @@ class User(AbstractUser):
         """
         Getting avarage rating for the current user
         """
-        avarage_score = TaskRating.objects.filter(
-            Q(task__owner=self, orderer__isnull=True) | Q(task__worker=self, worker__isnull=True)
-        ).aggregate(Avg("score", default=0))
+        avarage_score = TaskRating.objects.filter(worker=self).aggregate(Avg("score", default=0))
         return avarage_score["score__avg"]
 
     def __str__(self) -> str:
@@ -99,6 +114,12 @@ class UserWallet(TimeStampedModel):
     class Meta:
         verbose_name = _("Кошелек пользователя")
         verbose_name_plural = _("Кошелек пользователя")
+
+
+# class UserDocument(TimeStampedModel):
+#     user = models.OneToOneField(to=settings.AUTH_USER_MODEL, related_name="document", on_delete=models.CASCADE)
+#     file = models.FileField()
+#     is_business = models.BooleanField(default=False)
 
 
 class PhoneNumber(TimeStampedModel):
