@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers, validators
 from rest_framework.exceptions import ValidationError
@@ -5,8 +6,10 @@ from rest_framework.exceptions import ValidationError
 from profis.ratings.models import TaskRating
 from profis.tasks.models import Task
 
+User = get_user_model()
 
-class WorkerTaskRatingSerializer(serializers.ModelSerializer):
+
+class TaskRatingSerializer(serializers.ModelSerializer):
     worker = serializers.SerializerMethodField()
     task = serializers.SerializerMethodField()
 
@@ -28,67 +31,14 @@ class WorkerTaskRatingSerializer(serializers.ModelSerializer):
         return {"id": task.id, "name": task.name}
 
 
-class OrdererTaskRatingSerializer(serializers.ModelSerializer):
-    orderer = serializers.SerializerMethodField()
-    task = serializers.SerializerMethodField()
+class TaskRatingCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for rating worker of the tasks
+    """
 
-    class Meta:
-        model = TaskRating
-        fields = [
-            "orderer",
-            "task",
-            "score",
-            "review",
-            "created_at",
-        ]
-
-    def get_orderer(self, obj):
-        orderer = obj.task.owner
-        return {"id": orderer.id, "first_name": orderer.first_name, "last_name": orderer.last_name}
-
-    def get_task(self, obj):
-        task = obj.task
-        return {"id": task.id, "name": task.name}
-
-
-class WorkerTaskRatingCreateSerializer(serializers.ModelSerializer):
-    worker = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    task = serializers.PrimaryKeyRelatedField(queryset=Task.objects.all(), write_only=True)
-
-    class Meta:
-        model = TaskRating
-        validators = [
-            validators.UniqueTogetherValidator(
-                queryset=TaskRating.objects.all(),
-                fields=["worker", "task"],
-                message=_("Рейтинг с той же задачей и исполнителем уже существует"),
-            )
-        ]
-        fields = [
-            "worker",
-            "task",
-            "score",
-            "review",
-        ]
-
-    def validate(self, validated_data):
-        worker = validated_data.get("worker")
-        task = validated_data.get("task")
-
-        # Check if the worker is the same as the orderer (owner of the task)
-        if worker == task.owner:
-            raise ValidationError(_("Вы не можете оценивать себя как исполнителя"))
-
-        # Check if the worker is related to this task
-        if worker != task.worker:
-            raise ValidationError(_("вы не являетесь исполнителем этой заданий"))
-
-        return validated_data
-
-
-class OrdererTaskRatingCreateSerializer(serializers.ModelSerializer):
     orderer = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    task = serializers.PrimaryKeyRelatedField(queryset=Task.objects.all(), write_only=True)
+    task = serializers.PrimaryKeyRelatedField(queryset=Task.objects.all(), write_only=True, required=True)
+    worker = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), write_only=True, required=True)
 
     class Meta:
         model = TaskRating
@@ -96,10 +46,11 @@ class OrdererTaskRatingCreateSerializer(serializers.ModelSerializer):
             validators.UniqueTogetherValidator(
                 queryset=TaskRating.objects.all(),
                 fields=["orderer", "task"],
-                message=_("Рейтинг с той же задачей и заказчиком уже существует"),
+                message=_("Рейтинг с той же задачей и исполнителем уже существует"),
             )
         ]
         fields = [
+            "worker",
             "orderer",
             "task",
             "score",
@@ -109,13 +60,19 @@ class OrdererTaskRatingCreateSerializer(serializers.ModelSerializer):
     def validate(self, validated_data):
         orderer = validated_data.get("orderer")
         task = validated_data.get("task")
+        score = validated_data.get("score")
 
-        # Check if the worker is the same as the orderer (owner of the task)
+        # Check if the worker is not orderer (owner of the task)
+        if orderer == task.worker:
+            raise ValidationError(_("Вы не можете оценивать себя как исполнителя"))
+
+        # Check if the worker is related to this task
         if orderer != task.owner:
             raise ValidationError(_("Вы не являетесь заказчиком этой заданий"))
 
-        # Check if the orderer is not worker
-        if orderer == task.worker:
-            raise ValidationError(_("Вы не можете оценивать себя как заказчика"))
+        # Allowed score
+        if score:
+            if score < 0 or score > 5:
+                raise ValidationError(_("Допустимый балл составляет от 1 до 5"))
 
         return validated_data

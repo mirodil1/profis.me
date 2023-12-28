@@ -9,7 +9,7 @@ from profis.tasks.models import Task
 class TaskRating(TimeStampedModel):
     worker = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
-        related_name="ratings_as_worker",
+        related_name="ratings_received",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -17,7 +17,7 @@ class TaskRating(TimeStampedModel):
     )
     orderer = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
-        related_name="ratings_as_orderer",
+        related_name="ratings_given",
         null=True,
         blank=True,
         on_delete=models.CASCADE,
@@ -36,4 +36,4 @@ class TaskRating(TimeStampedModel):
         ]
 
     def __str__(self) -> str:
-        return f"{self.orderer if self.orderer else self.worker} - {self.score}"
+        return f"{self.orderer.first_name} -> {self.worker.first_name}: {self.score} stars"

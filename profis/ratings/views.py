@@ -1,52 +1,44 @@
 from django.db.models.query import QuerySet
 from drf_spectacular.utils import extend_schema
+from rest_framework import status
 from rest_framework.mixins import CreateModelMixin, ListModelMixin
+from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from profis.ratings.models import TaskRating
-from profis.ratings.serializers import (
-    OrdererTaskRatingCreateSerializer,
-    OrdererTaskRatingSerializer,
-    WorkerTaskRatingCreateSerializer,
-    WorkerTaskRatingSerializer,
-)
+from profis.ratings.serializers import TaskRatingCreateSerializer, TaskRatingSerializer
+from profis.tasks.models import Task
 
 
-@extend_schema(tags=["ratings"])
-class WorkerTaskRatingViewSet(ListModelMixin, GenericViewSet):
-    serializer_class = WorkerTaskRatingSerializer
+@extend_schema(tags=["ratings"], description="<h3><li>Get list of ratings for requested user</li><h3>")
+class TaskRatingViewSet(ListModelMixin, GenericViewSet):
+    serializer_class = TaskRatingSerializer
     queryset = TaskRating.objects.all()
 
     def get_queryset(self) -> QuerySet:
         """
-        Returns ratings from workers related to the requested user when they are owner of tasks
+        Returns ratings for specified user
         """
         qs = super().get_queryset()
         user_id = self.kwargs["user_id"]
-        return qs.filter(task__owner__id=user_id).exclude(orderer__isnull=True).select_related("task", "task__owner")
+        return qs.filter(worker=user_id).select_related("task", "task__worker")
 
 
-@extend_schema(tags=["ratings"])
-class OrdererTaskRatingViewSet(ListModelMixin, GenericViewSet):
-    serializer_class = OrdererTaskRatingSerializer
+@extend_schema(tags=["ratings"], description="<h3><li>Rate the worker after the task has finished</li><h3>")
+class TaskRatingCreateViewSet(CreateModelMixin, GenericViewSet):
+    serializer_class = TaskRatingCreateSerializer
     queryset = TaskRating.objects.all()
 
-    def get_queryset(self) -> QuerySet:
-        """
-        Returns ratings from orderers related to the requested user when they are worker of tasks
-        """
-        qs = super().get_queryset()
-        user_id = self.kwargs["user_id"]
-        return qs.filter(task__worker__id=user_id).exclude(worker__isnull=True).select_related("task", "task__owner")
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        task_rating = serializer.save()
+        headers = self.get_success_headers(serializer.data)
 
+        # Update status of the task
+        task = task_rating.task
+        task.status = Task.Status.COMPLETED
+        task.save()
 
-@extend_schema(tags=["ratings"], description="<h3><li>Worker rate the orderer after the task has finished</li><h3>")
-class WorkerTaskRatingCreateViewSet(CreateModelMixin, GenericViewSet):
-    serializer_class = WorkerTaskRatingCreateSerializer
-    queryset = TaskRating.objects.all()
-
-
-@extend_schema(tags=["ratings"], description="<h3><li>Orderer rate the worker after the task has finished</li><h3>")
-class OrdererTaskRatingCreateViewSet(CreateModelMixin, GenericViewSet):
-    serializer_class = OrdererTaskRatingCreateSerializer
-    queryset = TaskRating.objects.all()
+        print(task.status)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
