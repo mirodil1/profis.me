@@ -18,12 +18,13 @@ from rest_framework.viewsets import GenericViewSet
 
 from profis.subscription.models import UserPlan
 from profis.tasks.filters import TaskFilter
-from profis.tasks.models import Task, TaskResponse
+from profis.tasks.models import Task, TaskResponse, TaskResponseTemplate
 from profis.tasks.permissions import IsWorker
 from profis.tasks.serializers import (
     TaskCreateSerializer,
     TaskResponseCreateSerializer,
     TaskResponseSerializer,
+    TaskResponseTemplateSerializer,
     TaskSerializer,
 )
 
@@ -172,18 +173,17 @@ class TaskResponseWorkerAPIView(APIView):
     Choose worker for the task
     """
 
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, worker_id, task_id):
         task = get_object_or_404(Task, id=task_id)
         task_response = get_object_or_404(TaskResponse, task=task, worker_id=worker_id)
         if not task.worker:
             try:
                 if task_response.response_type == TaskResponse.ResponseType.POST:
-                    print(task_response.worker.userwallet.balance)
                     if task_response.worker.userwallet.balance >= task.category.post_price:
                         task_response.worker.userwallet.balance -= task.category.post_price
                         task_response.worker.userwallet.save()
-                        print("saved")
-                        print(task_response.worker.userwallet.balance)
                     else:
                         return Response(
                             {"error": _("У исполнителя недостаточно средств.")}, status=status.HTTP_400_BAD_REQUEST
@@ -206,3 +206,17 @@ class TaskResponseWorkerAPIView(APIView):
         else:
             # Task already has a worker
             return Response({"error": _("У задачи уже есть исполнитель.")}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@extend_schema(tags=["task-responses"])
+class TaskResponseTemplateViewSet(
+    CreateModelMixin, ListModelMixin, RetrieveModelMixin, UpdateModelMixin, GenericViewSet
+):
+    serializer_class = TaskResponseTemplateSerializer
+    queryset = TaskResponseTemplate.objects.all()
+    lookup_field = "id"
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.filter(user=self.request.user).order_by("-created_at")

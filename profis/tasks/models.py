@@ -142,3 +142,9 @@ class TaskResponse(TimeStampedModel):
     class Meta:
         verbose_name = _("Отклик")
         verbose_name_plural = _("Отклик")
+
+
+class TaskResponseTemplate(TimeStampedModel):
+    user = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="task_template")
+    title = models.CharField(max_length=128, verbose_name=_(""))
+    description = models.TextField(verbose_name=_(""))

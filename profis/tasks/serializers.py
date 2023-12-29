@@ -7,7 +7,7 @@ from rest_framework_gis.serializers import GeoModelSerializer
 from profis.categories.models import Category
 from profis.categories.serializers import CategorySerializer
 from profis.subscription.models import UserPlan
-from profis.tasks.models import Task, TaskAddress, TaskImage, TaskResponse
+from profis.tasks.models import Task, TaskAddress, TaskImage, TaskResponse, TaskResponseTemplate
 from profis.users.serializers import UserSerializer
 
 
@@ -224,3 +224,15 @@ class TaskResponseCreateSerializer(serializers.ModelSerializer):
                 ).exists():
                     raise serializers.ValidationError(_("У вас нет активных тарифов"))
         return validated_data
+
+
+class TaskResponseTemplateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for task template model
+    """
+
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    class Meta:
+        model = TaskResponseTemplate
+        fields = ["user", "title", "description"]
